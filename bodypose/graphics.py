@@ -5,7 +5,7 @@ RED = (0, 0, 255)
 GREEN = (0, 255, 0)
 WHITE =  (255, 255, 255)
 
-def draw_key_points(img, coords, thresh, keypoints):
+def draw_keypoints(img, coords, thresh, keypoints):
     """
     Draws the skeleton of a person. Keypoints below a given threshold are ignored.
 
@@ -14,7 +14,7 @@ def draw_key_points(img, coords, thresh, keypoints):
     img : np.array (dtype: uint8)
         Input image.
     coords : np.array (dtype: float)
-        Keypoints prediction coordinates and scores.
+        Keypoints prediction coordinates and scores in format (y, x, p).
     thresh : float
         Confidence score threshold.
     keypoints : dict
@@ -26,25 +26,25 @@ def draw_key_points(img, coords, thresh, keypoints):
         Output image. 
     """
     # head
-    img = draw_bone(coords[keypoints["left_eye"]], coords[keypoints["left_ear"]], thresh,  color=RED)    
-    img = draw_bone(coords[keypoints["left_eye"]], coords[keypoints["nose"]], thresh,  color=RED)
+    img = draw_bone(img, coords[keypoints["left_eye"]], coords[keypoints["left_ear"]], thresh,  color=RED)    
+    img = draw_bone(img, coords[keypoints["left_eye"]], coords[keypoints["nose"]], thresh,  color=RED)
 
-    img = draw_bone(coords[keypoints["right_eye"]], coords[keypoints["rigth_ear"]], thresh,  color=GREEN)
-    img = draw_bone(coords[keypoints["right_eye"]], coords[keypoints["nose"]], thresh,  color=GREEN)
+    img = draw_bone(img, coords[keypoints["right_eye"]], coords[keypoints["right_ear"]], thresh,  color=GREEN)
+    img = draw_bone(img, coords[keypoints["right_eye"]], coords[keypoints["nose"]], thresh,  color=GREEN)
     
     # arms
-    img = draw_bone(coords[keypoints["left_shoulder"]], coords[keypoints["left_elbow"]], thresh,  color=RED)
-    img = draw_bone(coords[keypoints["left_elbow"]], coords[keypoints["left_wrist"]], thresh,  color=RED)
+    img = draw_bone(img, coords[keypoints["left_shoulder"]], coords[keypoints["left_elbow"]], thresh,  color=RED)
+    img = draw_bone(img, coords[keypoints["left_elbow"]], coords[keypoints["left_wrist"]], thresh,  color=RED)
     
-    img = draw_bone(coords[keypoints["rigth_shoulder"]], coords[keypoints["right_elbow"]], thresh,  color=GREEN)
-    img = draw_bone(coords[keypoints["right_elbow"]], coords[keypoints["right_wrist"]], thresh,  color=GREEN)
+    img = draw_bone(img, coords[keypoints["right_shoulder"]], coords[keypoints["right_elbow"]], thresh,  color=GREEN)
+    img = draw_bone(img, coords[keypoints["right_elbow"]], coords[keypoints["right_wrist"]], thresh,  color=GREEN)
 
     # legs
-    img = draw_bone(coords[keypoints["left_hip"]], coords[keypoints["left_knee"]], thresh,  color=RED)
-    img = draw_bone(coords[keypoints["left_knee"]],coords[keypoints["left_ankle"]], thresh,  color=RED)
+    img = draw_bone(img, coords[keypoints["left_hip"]], coords[keypoints["left_knee"]], thresh,  color=RED)
+    img = draw_bone(img, coords[keypoints["left_knee"]],coords[keypoints["left_ankle"]], thresh,  color=RED)
     
-    img = draw_bone(coords[keypoints["right_hip"]], coords[keypoints["right_knee"]], thresh,  color=GREEN)
-    img = draw_bone(coords[keypoints["right_knee"]],coords[keypoints["right_ankle"]], thresh,  color=GREEN)
+    img = draw_bone(img, coords[keypoints["right_hip"]], coords[keypoints["right_knee"]], thresh,  color=GREEN)
+    img = draw_bone(img, coords[keypoints["right_knee"]],coords[keypoints["right_ankle"]], thresh,  color=GREEN)
 
     return img
 
@@ -77,8 +77,8 @@ def draw_bone(img, pt1, pt2, thresh, color):
         return img
     
     H, W = img.shape[:2]
-    X1, Y1 = (pt1[:2] * (H, W)).astype(int)
-    X2, Y2 = (pt2[:2] * (H, W)).astype(int)
+    Y1, X1 = (pt1[:2] * (H, W)).astype(int)
+    Y2, X2 = (pt2[:2] * (H, W)).astype(int)
 
     img = cv2.line(img, (X1, Y1), (X2, Y2), color,  2)
     

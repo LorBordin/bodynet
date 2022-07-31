@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import time
+import cv2
 
 class BodyPoseNet():
     def __init__(self, model):
@@ -8,6 +9,8 @@ class BodyPoseNet():
         self.interpreter = tf.lite.Interpreter(model_path=model["path"])
         self.interpreter.allocate_tensors()
         self.img_size = model["image_size"]
+
+        self.keypoints = model["keypoints"]
         self.n_keypoints = len(model["keypoints"].keys())
 
         
@@ -29,19 +32,10 @@ class BodyPoseNet():
             inference time in secs
         """
         
-        # compute pct of padding
         H, W = img.shape[:2]
-        
-        if H>W:
-            pad = .5 * (1 - W/H)
-            x,  y = np.ones(self.n_keypoints), np.zeros(self.n_keypoints)
-        else: 
-            pad = .5 * (1 - H/W)
-            x, y = np.zeros(self.n_keypoints), np.ones(self.n_keypoints)
-        
-        padding_bias = np.stack([x, y], axis=-1)
-        padding_bias *= pad
 
+        # image preprocessing
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = tf.expand_dims(img, axis=0)
         img = tf.image.resize_with_pad(img, self.img_size, self.img_size)
         img = tf.cast(img, tf.uint8)
@@ -57,9 +51,48 @@ class BodyPoseNet():
         self.interpreter.invoke()
 
         # Get the model predictions and subtract the bias
-        keypoints_with_scores = self.interpreter.get_tensor(output_details[0]["index"])
-        keypoints_with_scores[:,:2] -= padding_bias
-
+        keypoints_with_scores = self.interpreter.get_tensor(output_details[0]["index"])[0, 0]
+        keypoints_with_scores = unpad_predictions(keypoints_with_scores, (H,W), self.n_keypoints)
         end = time.time()
 
-        return keypoints_with_scores[0, 0], (end-start)
+        return keypoints_with_scores, (end-start)
+
+
+def unpad_predictions(keypoints_with_scores, img_size, n_keypoints):
+    """
+    Converts the keypoints coordinates from padded image to the original image.
+
+    Parameters
+    ----------
+    keypoints_with_scores : np.array (dtype: float)
+        Normalised keypoints coordinates with scores in format (y, x, p).
+    img_size : tuple (dtype: int)
+        Image  height and width.
+    n_keypoints : int
+        Number of predicted keypoints.
+
+    Returns
+    -------
+    keypoints_with_scores:
+        Normalised keypoints coordinates with scores as pct of the 
+        original height and width, in format (y, x, p).
+    """
+    H, W = img_size
+    
+    if H>W:
+        pad = .5 * (1 - W/H)
+        x,  y = np.ones(n_keypoints), np.zeros(n_keypoints)
+        padding_bias = np.stack([y, x], axis=-1)
+        padding_bias *= pad
+        keypoints_with_scores[:,:2] -= padding_bias
+        keypoints_with_scores[:, 1] *= H/W
+
+    else: 
+        pad = .5 * (1 - H/W) 
+        x, y = np.zeros(n_keypoints), np.ones(n_keypoints)
+        padding_bias = np.stack([y, x], axis=-1)
+        padding_bias *= pad
+        keypoints_with_scores[:,:2] -= padding_bias
+        keypoints_with_scores[:, 0] *= W/H
+    
+    return keypoints_with_scores
