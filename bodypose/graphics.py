@@ -46,6 +46,12 @@ def draw_keypoints(img, coords, thresh, keypoints):
     img = draw_bone(img, coords[keypoints["right_hip"]], coords[keypoints["right_knee"]], thresh,  color=GREEN)
     img = draw_bone(img, coords[keypoints["right_knee"]],coords[keypoints["right_ankle"]], thresh,  color=GREEN)
 
+    # body
+    img = draw_bone(img, coords[keypoints["left_shoulder"]], coords[keypoints["left_hip"]], thresh, color=WHITE)
+    img = draw_bone(img, coords[keypoints["right_shoulder"]],  coords[keypoints["right_hip"]], thresh, color=WHITE)
+    img = draw_bone(img, coords[keypoints["left_shoulder"]], coords[keypoints["right_shoulder"]], thresh, color=WHITE)
+    img = draw_bone(img, coords[keypoints["left_hip"]], coords[keypoints["right_hip"]], thresh, color=WHITE)
+
     return img
 
 
