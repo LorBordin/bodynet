@@ -22,7 +22,7 @@ def _max_width_():
 
 def main(args):
 
-    cam = cv2.VideoCapture(0)
+    cam = cv2.VideoCapture(-1)
 
     print("[INFO] Loading the model ...")
     model = MODELS_DICT["movenet_" + args["model"]]
