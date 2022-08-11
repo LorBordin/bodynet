@@ -1,4 +1,5 @@
+protobuf==3.19.4
 opencv-python
 streamlit
-tensorflow
+tensorflow==2.9.1
 
