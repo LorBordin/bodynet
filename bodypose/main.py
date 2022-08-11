@@ -6,7 +6,7 @@ from bodypose.graphics import draw_keypoints
 from bodypose.model import BodyPoseNet
 from config import MODELS_DICT
 
-def main(args):
+def main():
 
     cam = cv2.VideoCapture(0)
 
@@ -30,7 +30,7 @@ def main(args):
         preds, pred_time = network.predict(frame)
         frame = draw_keypoints(frame, preds, args["thresh"], network.keypoints)
 
-        if args["use_ui"]:
+        if args["use_ui"] is not None:
             args["ui_window"].image(frame)
         else:
             cv2.imshow("Canvas", frame)
@@ -57,4 +57,4 @@ if __name__=="__main__":
     ap.add_argument("--use_ui", type=bool, default=False)
     args = vars(ap.parse_args())
     
-    main(args)
+    main()
