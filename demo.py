@@ -2,8 +2,8 @@ import argparse
 import time
 import cv2
 
-from bodypose.graphics import draw_keypoints
-from bodypose.model import BodyPoseNet
+from bodypose.demo.graphics import draw_keypoints
+from bodypose.demo.model import BodyPoseNet
 from config import MODELS_DICT
 
 def main(args):

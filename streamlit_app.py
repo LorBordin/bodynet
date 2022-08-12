@@ -2,9 +2,9 @@ from streamlit_webrtc import webrtc_streamer
 import streamlit as st
 import argparse
 
-from bodypose.videoprocessor import VideoProcessor
-from bodypose.graphics import draw_keypoints
-from bodypose.model import BodyPoseNet
+from bodypose.demo.videoprocessor import VideoProcessor
+from bodypose.demo.graphics import draw_keypoints
+from bodypose.demo.model import BodyPoseNet
 from config import MODELS_DICT
 
 def _max_width_():

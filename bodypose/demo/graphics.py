@@ -1,4 +1,3 @@
-from pickle import REDUCE
 import cv2
 
 RED = (0, 0, 255)

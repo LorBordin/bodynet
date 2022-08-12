@@ -3,9 +3,7 @@ import time
 import cv2
 import av
 
-from bodypose.graphics import draw_keypoints
-from bodypose.model import BodyPoseNet
-from config import MODELS_DICT
+from bodypose.demo.graphics import draw_keypoints
 
 class VideoProcessor():
     
