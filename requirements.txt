@@ -1,5 +1,6 @@
 protobuf==3.19.4
 opencv-python
 streamlit
+streamlit_webrtc
 tensorflow==2.9.1
 
