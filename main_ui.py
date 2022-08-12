@@ -1,8 +1,8 @@
+from streamlit_webrtc import webrtc_streamer
 import streamlit as st
 import argparse
-import time
-import cv2
 
+from bodypose.videoprocessor import VideoProcessor
 from bodypose.graphics import draw_keypoints
 from bodypose.model import BodyPoseNet
 from config import MODELS_DICT
@@ -19,42 +19,6 @@ def _max_width_():
         """,
             unsafe_allow_html=True,
         )
-
-def main(args):
-
-    cam = cv2.VideoCapture(0)
-
-    print("[INFO] Loading the model ...")
-    model = MODELS_DICT["movenet_" + args["model"]]
-    network = BodyPoseNet(model)
-    
-    # stats
-    n_frames = 0
-    inf_time = 0
-    start = time.time()
-
-    print("[INFO] Starting the loop ...")
-
-    while True:
-
-        grabbed, frame = cam.read()
-        if not grabbed:
-            break
-        
-        preds, pred_time = network.predict(frame)
-        frame = draw_keypoints(frame, preds, args["thresh"], network.keypoints)
-
-
-        args["ui_window"].image(frame, channels="BGR")
-
-        n_frames += 1
-        inf_time += pred_time
-
-        if (n_frames%100)==0:
-            print(f"\r[INFO] Avearge fps: {n_frames/(time.time() - start):.2f}. Average inference time: {inf_time/n_frames:.3f} s.", end="")
-    
-    cam.release()
-
 
 if __name__=="__main__":
     
@@ -95,5 +59,8 @@ if __name__=="__main__":
             value=.2,
         )
 
-    main(args)
-    
+    ctx = webrtc_streamer(key="example", video_processor_factory=VideoProcessor)
+    if ctx.video_processor:
+        ctx.video_processor.model_name = MODELS_DICT["movenet_" + args["model"]]
+        ctx.video_processor.model = BodyPoseNet(ctx.video_processor.model_name)
+        ctx.video_processor.thresh = args["thresh"]
