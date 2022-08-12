@@ -63,25 +63,27 @@ def get_features_layers(model, strides, img_shape):
 
 def create_backbone(input_shape, strides, alpha=1, arch="mobilenetV2", name="backbone"):
     """ 
-        Returns the backbone from a given convolutional model.
+        Build backbone on top given convolutional model.
 
         Parameters
         ----------
         input_shape: tuple
-            pass
+            Input image shape.
         strides: tuple
-            pass
+            List of multipliers (int) that are usewd to  select the layers.
         alpha: float
-            pass
+            Depth parameter that controls the number of filters of each convolutional layer.
+            The default value is 1.
         arch: str
-            pass
+            Input model architecture. The current options are MobileNetV2 and MobileNetV3.
+            The default value is MobileNetV2.
         name: str
-            pass
+            Name of the backbone.
 
         Returns
         -------
         backbone : keras.model
-            pass
+            Backbone model build from the given architecture.
     """
     
     if arch=="mobilenetV2":

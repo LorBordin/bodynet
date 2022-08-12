@@ -8,7 +8,25 @@ def create_FPN(inputs,
                in_channels, 
                activation=mish, 
                name="FPN"):
-    """ Create Feature Pyramid Network """
+    """ 
+        Creates the Feature Pyramid Network. 
+
+        Parameters
+        ----------
+        inputs: list
+            pass
+        in_channels: int
+            pass
+        activation: pass
+            pass
+        name: str
+            pass
+        
+        Returns
+        -------
+        fpn: keras.model 
+            pass
+    """
     first_head = True
     
     for i, in_layer in enumerate(inputs):
@@ -26,11 +44,12 @@ def create_FPN(inputs,
             x = L.UpSampling2D((2,2), interpolation="bilinear", name=name+f"_UpSamp{i+1}")(x)
             x = L.Add(name=name+f"_Add{i+1}")([x, y])
     
-    return x
+    fpn = Model(inputs, x)
+    
+    return fpn
 
 
 if __name__=="__main__":
     inputs = [L.Input((13, 13, 1280)), L.Input((26, 26, 576)), L.Input((52, 52, 192))]
-    outputs = create_FPN(inputs, 128)
-    FPN = Model(inputs, outputs)
+    FPN = create_FPN(inputs, 128)
     print(FPN.summary())
