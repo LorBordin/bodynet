@@ -59,7 +59,12 @@ if __name__=="__main__":
             value=.2,
         )
 
-    ctx = webrtc_streamer(key="example", video_processor_factory=VideoProcessor)
+    ctx = webrtc_streamer(key="example", 
+        video_processor_factory=VideoProcessor,
+        rtc_configuration={ # Add this line
+        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+        )
+        
     if ctx.video_processor:
         ctx.video_processor.model_name = MODELS_DICT["movenet_" + args["model"]]
         ctx.video_processor.model = BodyPoseNet(ctx.video_processor.model_name)

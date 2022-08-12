@@ -25,8 +25,8 @@ class VideoProcessor():
 
         img = frame.to_ndarray(format="bgr24")
             
-        #preds, pred_time = self.model.predict(img)
-        #img = draw_keypoints(img, preds, self.thresh, self.model.keypoints)
+        preds, pred_time = self.model.predict(img)
+        img = draw_keypoints(img, preds, self.thresh, self.model.keypoints)
 
         #self.n_frames += 1
         #self.inf_time += pred_time
