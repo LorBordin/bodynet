@@ -1,40 +1,75 @@
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import layers as L
 
-def DepthWiseConv2D(inputs, n_filters, kernel, strides, name, use_bias=True):
-    
-    x = L.DepthwiseConv2D(kernel_size=kernel, strides=strides, padding="same",  
-                          use_bias=use_bias, kernel_regularizer=l2(1e-4), name=name+"inter")(inputs)
-    x = L.Conv2D(n_filters, kernel_size=(1,1), strides=(1,1), padding="same", 
-                          use_bias=use_bias, name=name+"intra")(x)
-    return x
+
+class DepthWiseConv2D(L.Layer):
+    """ 
+        Depthwise 2D Convolution class. It firstly forwards the input to a depthwise 
+        convolutional layer, with respectively kernel and strides kernel_size  and strides, 
+        then the output is forwarded to a Conv2D layer with n_filters and (1,1) kernel_size 
+        and strides.
+
+        Parameters
+        ----------
+        n_filters: int
+            Number of output filters.
+        kernel: tuple
+            Size of the kernel of the depthwise convolutional layer.
+        strides: tuple
+            Strides of the depthwise convolutional layer.
+        name: str
+            name of the layer
+        use_bias: bool
+            If True each internal layer uses have use_biasseto to True. 
+    """
+    def __init__(self, n_filters, kernel, strides, name, use_bias=True):
+        super().__init__()
+        self.depthwise_conv = L.DepthwiseConv2D(kernel_size=kernel, 
+                                                strides=strides, 
+                                                padding="same",
+                                                use_bias=use_bias,
+                                                kernel_regularizer=l2(1e-4),
+                                                name=name+"inter")
+        self.conv = L.Conv2D(n_filters, 
+                             kernel_size=(1,1), 
+                             strides=(1,1),
+                             padding="same",
+                             use_bias=use_bias,
+                             name=name+"intra")
+
+    def call(self, inputs):
+        x = self.depthwise_conv(inputs)
+        return self.conv(x)          
 
 
-def residual_block(inputs, filters, kernel=(3,3), strides=(1,1), depthwise_conv=False, name=None):
+class Conv3x3Module(L.Layer):
+    """
+        Convolutional block class, composed by a 3x3 convolution, batch_normalization and 
+        activation function.
+
+        Parameters
+        ----------
+        n_filters: int
+            Number of output filters.
+        activation: function
+            Activation function. The default value if mish.
+        name: str
+            Layer name.
+        use_deptwise: if True uses a DepthWiseConv2D layer instead of Conv2D
+    """
+    def __init__(self, n_filters, activation, name, use_depthwise):
+        super().__init__()
         
-    x = L.Conv2D(filters, (1,1), padding="same", use_bias=False, kernel_regularizer=l2(1e-4), name=name+"_Conv1")(inputs)
-    x = L.BatchNormalization(momentum=.9, epsilon=2e-5, name=name+"_bn_Conv1")(x)
-    x = L.Activation("relu", name=name+"_Conv1_act")(x)
-    
-    if depthwise_conv:
-        x = DepthWiseConv2D(x, filters, kernel, strides, use_bias=False, name=name+"_DWConv2")
-    else:
-        x = L.Conv2D(filters, kernel, strides, padding="same", use_bias=False, name=name+"_Conv2")(x)
-        
-    x = L.BatchNormalization(momentum=.9, epsilon=2e-5, name=name+"bn_Conv2")(x)
-    x = L.Activation("relu", name=name+"_Conv2_act")(x)
-    
-    x = L.Conv2D(filters*2, (1,1), padding="same", use_bias=False, kernel_regularizer=l2(1e-4), name=name+"_Conv3")(x)
-    x = L.BatchNormalization(momentum=.9, epsilon=2e-5, name=name+"_bn_Conv3")(x)
-    x = L.Activation("relu", name=name+"_Conv3_act")(x)
-    
-    return x
+        if use_depthwise:
+            self.conv_3x3 = DepthWiseConv2D(n_filters, (3,3), (1,1), name=name+"_DWConv")
+        else:
+            self.conv_3x3 =  L.Conv2D(n_filters, (3,3), 
+                                      padding="same", kernel_regularizer=l2(1e-4),  name=name+"_Conv")
 
-
-def shortcut_block(inputs, filters, strides=(1,1), name=None):
+        self.bn = L.BatchNormalization(momentum=.9, epsilon=2e-5, name=name+"_bn_Conv")
+        self.act = L.Activation(activation, name=name+"_Conv_act")
     
-    x = L.Conv2D(filters, (1,1), strides, padding="same", use_bias=False, kernel_regularizer=l2(1e-4), name=name+"_Conv1")(inputs)
-    x = L.BatchNormalization(momentum=.9, epsilon=2e-5, name=name+"_bn_Conv1")(x)
-    x = L.Activation("relu", name=name+"Conv1_acts")(x)
-    
-    return x
+    def call(self, inputs):
+        x = self.conv_3x3(inputs)
+        x = self.bn(x)
+        return self.act(x)

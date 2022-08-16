@@ -9,23 +9,24 @@ def create_FPN(inputs,
                activation=mish, 
                name="FPN"):
     """ 
-        Creates the Feature Pyramid Network. 
+        Returns a Feature Pyramid Network built on top of the backbone. 
 
         Parameters
         ----------
         inputs: list
-            pass
+            List of input layers from the backbone.
         in_channels: int
-            pass
-        activation: pass
-            pass
+            Number of channels for each convolutional layer.
+        activation: function
+            Activation function applied after a convolutional layer.
+            The default value is mish.
         name: str
-            pass
+            Model name.
         
         Returns
         -------
         fpn: keras.model 
-            pass
+            Feature pyramid network model.
     """
     first_head = True
     
