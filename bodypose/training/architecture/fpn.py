@@ -45,7 +45,7 @@ def create_FPN(inputs,
             x = L.UpSampling2D((2,2), interpolation="bilinear", name=name+f"_UpSamp{i+1}")(x)
             x = L.Add(name=name+f"_Add{i+1}")([x, y])
     
-    fpn = Model(inputs, x)
+    fpn = Model(inputs, x,  name=name)
     
     return fpn
 

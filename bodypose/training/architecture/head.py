@@ -12,9 +12,32 @@ def create_Head(inputs,
                 use_depthwise=False,
                 name="head"):
     """ 
-        Returns the two-dimensional head
-        Create Head for Classification and Regression on top of FPN that resembles CenterNet.
-        
+        Returns the head of the pose estimation model on top of the FPN.
+        It is composed by 4 separate heads:
+            - centermap that predicts the persons center,
+            - keypoints offesets: keypoints offsets from the person center of the most centered person,
+            - keypoints heatmaps: keypoints  heatmpas of the most centered person,
+            - coordinate offsets: keypoints offsets from the peak of the respective heatmap.
+
+        Parameters
+        ----------
+        inputs: keras.layer
+            Input layer (from the FPN).
+        out_channels: int
+            Number filters of the internal convolutional layers.
+        num_joints: int
+            Number of predicted joints.
+        activation: function
+            Activation function of the internal convolutional layers
+        use_depthwise: bool
+            If True uses depthwise convolution instead of standard convolution for the internal layers.
+        name: str
+            Model name.
+
+        Returns
+        -------
+        head: keras.model
+            Head model.
     """
     
     n_dim = 2
@@ -44,7 +67,7 @@ def create_Head(inputs,
     c_offsets = L.Activation("sigmoid", name=c_name+"_act")(c_offsets)
     
     outputs = [centermap, k_offsets, k_heatmaps, c_offsets]
-    head  = Model(inputs, outputs)
+    head  = Model(inputs, outputs, name=name)
     
     return head
 

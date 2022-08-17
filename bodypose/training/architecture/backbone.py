@@ -105,7 +105,7 @@ def create_backbone(input_shape, strides, alpha=1, arch="mobilenetV2", name="bac
     in_layers = model.layers[0].input
     out_layers = get_features_layers(model, strides, input_shape)
     
-    backbone = Model(in_layers, out_layers)
+    backbone = Model(in_layers, out_layers, name=name)
     return backbone
 
 
