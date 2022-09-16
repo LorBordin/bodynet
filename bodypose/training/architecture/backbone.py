@@ -48,7 +48,7 @@ def get_features_layers(model, strides, img_shape):
     
         shape = img_shape[0] // strides[counter]
     
-        if shape in layer.output_shape:
+        if shape in layer.output_shape[1:-1]:
             l_index = len(model.layers) - 1 - i
             f_layers.append(l_index)
             counter+=1
