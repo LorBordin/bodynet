@@ -52,6 +52,9 @@ def draw_keypoints(img, coords, thresh, keypoints):
     img = draw_bone(img, coords[keypoints["left_shoulder"]], coords[keypoints["right_shoulder"]], thresh, color=WHITE)
     img = draw_bone(img, coords[keypoints["left_hip"]], coords[keypoints["right_hip"]], thresh, color=WHITE)
 
+    # draw keypoints
+    img = draw_point(img, coords[:, :2], color=WHITE, radius="small")
+
     return img
 
 
@@ -91,7 +94,7 @@ def draw_bone(img, pt1, pt2, thresh, color):
     return img
 
 
-def draw_person_centers(img, coords, color=BLUE):
+def draw_point(img, coords, color=BLUE, radius="big"):
     """
         Draws points on the image.
 
@@ -101,7 +104,10 @@ def draw_person_centers(img, coords, color=BLUE):
             Input image.
         coords : np.array (dtype: float)
             Keypoints prediction coordinates and scores in format (y, x, p).
-    
+        color: tuple
+            Color of the circle in BGR. Default ot BLUE.
+        radius: str
+            If big it is 1% of the greatest dimension otherwise if 0.3%.
 
         Returns
         -------
@@ -109,7 +115,10 @@ def draw_person_centers(img, coords, color=BLUE):
             Output image. 
     """
     H, W = img.shape[:2]
-    radius =  int(.01 * max(W, H))
+    radius =  int(.01 * max(W, H)) if radius=="big" else int(.003 * max(W, H))
+    
+    if not coords.shape[1]:
+        return img
     
     for coord in coords:
         X, Y = (coord * (W, H)).astype(int)
