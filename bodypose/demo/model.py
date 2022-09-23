@@ -53,6 +53,7 @@ class BodyPoseNet():
         # Get the model predictions and subtract the bias
         keypoints_with_scores = self.interpreter.get_tensor(output_details[0]["index"])[0, 0]
         keypoints_with_scores = unpad_predictions(keypoints_with_scores, (H,W), self.n_keypoints)
+        keypoints_with_scores[:, :2] = keypoints_with_scores[:, :2][:,::-1]  # y <--> x
         end = time.time()
 
         return keypoints_with_scores, (end-start)
