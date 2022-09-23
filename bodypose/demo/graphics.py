@@ -1,8 +1,9 @@
 import cv2
 
-RED = (0, 0, 255)
-GREEN = (0, 255, 0)
+RED = (0, 0, 204)
+GREEN = (0, 204, 0)
 WHITE =  (255, 255, 255)
+BLUE = (204, 0, 0)
 
 def draw_keypoints(img, coords, thresh, keypoints):
     """
@@ -82,9 +83,36 @@ def draw_bone(img, pt1, pt2, thresh, color):
         return img
     
     H, W = img.shape[:2]
-    Y1, X1 = (pt1[:2] * (H, W)).astype(int)
-    Y2, X2 = (pt2[:2] * (H, W)).astype(int)
+    X1, Y1 = (pt1[:2] * (W, H)).astype(int)
+    X2, Y2 = (pt2[:2] * (W, H)).astype(int)
 
     img = cv2.line(img, (X1, Y1), (X2, Y2), color,  2)
+    
+    return img
+
+
+def draw_person_centers(img, coords, color=BLUE):
+    """
+        Draws points on the image.
+
+        Params
+        ------
+        img : np.array (dtype: uint8)
+            Input image.
+        coords : np.array (dtype: float)
+            Keypoints prediction coordinates and scores in format (y, x, p).
+    
+
+        Returns
+        -------
+        img : np.array (dtype: uint8)
+            Output image. 
+    """
+    H, W = img.shape[:2]
+    radius =  int(.01 * max(W, H))
+    
+    for coord in coords:
+        X, Y = (coord * (W, H)).astype(int)
+        img = cv2.circle(img, (X, Y), radius, color,  2)
     
     return img
