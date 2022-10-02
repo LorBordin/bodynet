@@ -1,6 +1,7 @@
 from ..utils import EXCLUDE_JOINTS_DEFAULT
 from ..utils import JOINTS_NAME
 
+from ...dataset.tfrecord_maker import IMAGE_FEATURE_DESCRIPTION
 from .preprocessing import create_density_map
 from .preprocessing import create_joint_mask
 from .preprocessing import create_depth_map
@@ -13,12 +14,7 @@ from imutils import paths
 from tensorflow.python.ops.image_ops import _ImageDimensions
 
 AUTOTUNE = tf.data.AUTOTUNE
-MAX_DEPTH = 3000.
 
-IMAGE_FEATURE_DESCRIPTION = {
-    'joints': tf.io.FixedLenFeature([], tf.string),
-    'image_raw': tf.io.FixedLenFeature([], tf.string),
-}
 
 def parse_image_function(example_proto):
     # Parse the input tf.train.Example proto using the dictionary above.

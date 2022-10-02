@@ -1,62 +1,45 @@
 from tensorflow.python.ops.image_ops import _ImageDimensions
 import tensorflow as tf
 
-MAX_DEPTH = 3000.0
-
-def decode_img(img, img_size):
-    """ Returns the padded image and the original aspect ratio (W/H) from bytes """
-    img = tf.io.decode_bmp(img, channels=3)
-    height, width, _ = _ImageDimensions(img, 3)
-    H, W = img_size
-    ratio = tf.cast(width/height, dtype=tf.float32)
-    return tf.image.resize_with_pad(img, target_height=H, target_width=W), ratio
-
-
-def load_RGB(imgPath):
-    img = tf.io.read_file(imgPath)
-    img = tf.io.decode_png(img, channels=3)
-    return tf.cast(img, dtype=tf.float32) / 127.5 - 1
-
-
-def load_depth(depthPath):
-    """ Load the depth image. """
-    depth = tf.io.read_file(depthPath)
-    depth = tf.io.decode_png(depth, dtype=tf.uint16)
-    depth = tf.cast(depth, tf.float32)
-    depth = tf.where(depth>MAX_DEPTH, 0., depth/MAX_DEPTH)
-    return depth
-
-
 @tf.function
-def create_density_map(joints_coords: tf.Tensor,
-                       grid_dim: int):
+def create_density_maps(peak_coords: tf.Tensor, grid_dim: int):
     """ 
-        Creates the density map peaked at the joint coords. 
-        input: joint_coords: shape(n_joints, 2)
-               grid_dim: side dimension of the FPN output
-        output: overall PDF + joints PDFs, tf.tensor shape=(n_grid, n_grid, n_joints+1) 
+        Returns several density maps of size (grid_dim, grid_dim), peaked in cell corresponding 
+        to peak_coords.The number of mapsis equal to  the number of peak_coords.
+
+        Parameters
+        ----------
+        peak_coords: tf.Tensor 
+            Tensor of shape (n_joints, 2) containing the normalised coordinatesof the peaks.
+        grid_dim: int
+            Side length of the density maps. It must be equal to the FPN output.
+        
+        Returns
+        -------
+        pdfs: tf.Tensor
+            Density maps of shape (grid_dim ** 2, n_joints).
+
     """
-    # create the grid map
+    # build the map
     grid = tf.cast(tf.linspace(0, 1, grid_dim+1), tf.float32)
     grid += 1/(grid_dim)/2
     grid = grid[:-1]
     xx, yy = tf.meshgrid(grid, grid)
     
-    # create one grid map for each joint
-    n_joints = len(joints_coords)
+    # define a map for each pair of coordinates
+    n_joints = len(peak_coords)
     XX = tf.tile(tf.expand_dims(xx,-1), [1, 1, n_joints])
     YY = tf.tile(tf.expand_dims(yy,-1), [1, 1, n_joints])
     
-    # build the joint PDFs
-    X, Y = joints_coords[:,0], joints_coords[:,1]
+    # define the PDFs
+    X, Y = peak_coords[:,0], peak_coords[:,1]
     sigma = 1.0 / grid_dim
     pdfs = tf.math.exp(-(tf.math.pow(XX-X, 2) + tf.math.pow(YY-Y, 2))/(2*tf.math.pow(sigma, 2)))
     pdfs = pdfs / tf.math.reduce_max(pdfs, axis=[0,1])
     pdfs = tf.where(tf.math.is_nan(pdfs), 0.0, pdfs)
     
-    # deal with not visible joints
-    # if any of the coords is zero then set the joint to not visible
-    mask = tf.where(tf.math.reduce_any(joints_coords==0., axis=-1), 0., 1.)
+    # deal with coords zero coords (not visible): set the PDFs to zero 
+    mask = tf.where(tf.math.reduce_any(peak_coords==0., axis=-1), 0., 1.)
     mask = tf.reshape(mask, (1, 1, n_joints))
 
     pdfs *= mask
@@ -65,38 +48,23 @@ def create_density_map(joints_coords: tf.Tensor,
     return pdfs
 
 
-@tf.function
-def create_depth_map(joints_coords, grid_dim):
+def sum_density_maps(pdfs):
     """ 
-        Creates the z_coord map for each joint. 
-        INPUT: joint_coords: tf.tensor of shape (n_joints, 2)
-               grid_dim: side dimension of the FPN output
-        OUTPUT: classification labels, tf.tensor of shape (n_grid, n_grid, n_joints+1)
+        Sums together multiple density maps in a whistful way.
+
+        Parameters
+        ----------
+        pdfs: tf.Tensor
+            Density maps of shape (grid_dim ** 2, n_joints).
+
+        Returns
+        -------
+        pdf: tf.Tensor
+            Multi peaked density map of shape (grid_dim ** 2).
     """
-    n_joints = len(joints_coords)
-    z_coords = joints_coords[:, -1]
-    y = tf.ones((grid_dim, grid_dim, n_joints), dtype=tf.float32) * z_coords
-    y = tf.reshape(y, (grid_dim*grid_dim, n_joints))
-    
-    return y
+    pdf = tf.math.reduce_sum(pdfs, axis=-1)
+    return pdf
 
-
-def create_joint_mask(joints_name, exclude_joints):
-    to_rm_len = len(exclude_joints) 
-    mask = tf.stack([joints_name]*to_rm_len, axis=0)
-    mask = (mask == tf.reshape(exclude_joints, (to_rm_len,1)))
-    mask = tf.math.reduce_sum(tf.cast(mask, tf.int16), axis=0)
-    return ~tf.cast(mask, tf.bool)
-
-
-def mask_img(element):
-    """ Applies mask to img (RGB or IR) extracted form the depth. 
-        Works also with batches of images.
-    """
-    img, depth = element
-    mask = tf.where(depth==0, 0., 1.)
-    return (img * mask, depth)
-    
 
 def crop_roi(img, depth, coords, probas, labels, min_margin ,max_margin, thresh=0.05,):
     """ Assume coords are in the shape (-1, 3) and img in format [H, W, C]""" 
