@@ -21,15 +21,15 @@ class BodyPoseNet():
         parameters
         ----------
         img : np.array 
-            input image (three channels)
+            input image (three channels).
 
         returns
         -------
         keypoints_with_scores : np.array
-            17 keypoints coordinates (normalised to one) with scores
+            17 keypoints coordinates (normalised to one) with scores.
 
         time: float
-            inference time in secs
+            inference time in secs.
         """
         
         H, W = img.shape[:2]
@@ -51,9 +51,17 @@ class BodyPoseNet():
         self.interpreter.invoke()
 
         # Get the model predictions and subtract the bias
-        keypoints_with_scores = self.interpreter.get_tensor(output_details[0]["index"])[0, 0]
-        keypoints_with_scores = unpad_predictions(keypoints_with_scores, (H,W), self.n_keypoints)
-        keypoints_with_scores[:, :2] = keypoints_with_scores[:, :2][:,::-1]  # y <--> x
+        keypoints_with_scores = self.interpreter.get_tensor(
+            output_details[0]["index"]
+            )[0, 0]
+        keypoints_with_scores = unpad_predictions(
+            keypoints_with_scores, 
+            (H,W), 
+            self.n_keypoints
+            )
+            
+        # Switch y <--> x
+        keypoints_with_scores[:, :2] = keypoints_with_scores[:, :2][:,::-1]  
         end = time.time()
 
         return keypoints_with_scores, (end-start)

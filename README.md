@@ -23,3 +23,9 @@ will allow to compare the network performances with the Movenet trained by the G
 - deploy the model
 - Finish to wrrite the README
 - Refinements ...
+
+### NextSteps
+- adjust create_labels function
+- adjust load_TFRecords_dataset function
+- adjust crop_roi function
+- adjust augmentation functions in order to incorporate the centres coordinates

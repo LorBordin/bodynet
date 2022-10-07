@@ -32,3 +32,4 @@ MODELS_DICT = {
                           "keypoints": KEYPOINT_DICT} 
 }
 
+N_KPTS = len(KEYPOINT_DICT)
