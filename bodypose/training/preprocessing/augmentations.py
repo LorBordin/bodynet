@@ -22,15 +22,22 @@ class HorizontalFlip():
         self.probability = probability
         self.keypoints_idxs = keypoints_idxs
 
-    def augment(self, rgb, coords):
+    def augment(self, rgb, c_kpts, c_cntrs):
         p = tf.random.uniform(shape=(), maxval=1)
         if p > self.probability:
-            return rgb, coords
+            return rgb, c_kpts, c_cntrs
         rgb = tf.reverse(rgb, (1,))
-        coords_x, coords_y = coords[:, 0], coords[:, 1]
-        coords_x = 1 - coords_x
-        coords = tf.stack([coords_x, coords_y], axis=1)
-        return rgb, tf.gather(coords, self.keypoints_idxs)
+
+        kpts_x, kpts_y = c_kpts[:, 0], c_kpts[:, 1]
+        kpts_x = 1 - kpts_x
+        c_kpts = tf.stack([kpts_x, kpts_y], axis=1)
+        c_kpts = tf.gather(c_kpts, self.keypoints_idxs)
+
+        cntrs_x, cntrs_y = c_cntrs[:, 0], c_cntrs[:, 1]
+        cntrs_x = 1 - cntrs_x
+        c_cntrs = tf.stack([cntrs_x, cntrs_y], axis=1)
+        
+        return rgb, c_kpts, c_cntrs
 
 
 class HorizontalShift():
@@ -48,7 +55,7 @@ class HorizontalShift():
     def __init__(self, max_shift_range):
         self.max_shift_range = max_shift_range
 
-    def augment(self, rgb, coords):
+    def augment(self, rgb, c_kpts, c_cntrs):
         
         shift = tf.random.uniform(shape=(), minval=-self.max_shift_range, maxval=self.max_shift_range)
         _, width, _ = _ImageDimensions(rgb, 3)
@@ -58,9 +65,15 @@ class HorizontalShift():
 
         rgb = tf.roll(rgb, shift=pixel_shift, axis=1)
         
-        coords_x, coords_y = coords[:, 0], coords[:, 1]
-        coords_x += shift
-        return rgb, tf.stack([coords_x, coords_y], axis=1)
+        kpts_x, kpts_y = c_kpts[:, 0], c_kpts[:, 1]
+        kpts_x += shift
+        c_kpts = tf.stack([kpts_x, kpts_y], axis=1)
+
+        cntrs_x, cntrs_y = c_cntrs[:, 0], c_cntrs[:, 1]
+        cntrs_x += shift
+        c_cntrs = tf.stack([cntrs_x, cntrs_y], axis=1)
+
+        return rgb, c_kpts, c_cntrs
 
 
 class VerticalShift():
@@ -78,7 +91,7 @@ class VerticalShift():
     def __init__(self, max_shift_range):
         self.max_shift_range = max_shift_range
 
-    def augment(self, rgb, coords):
+    def augment(self, rgb, c_kpts, c_cntrs):
 
         shift = tf.random.uniform(shape=(), minval=-self.max_shift_range, maxval=self.max_shift_range)
         height, _, _ = _ImageDimensions(rgb, 3)
@@ -88,9 +101,15 @@ class VerticalShift():
 
         rgb = tf.roll(rgb, shift=pixel_shift, axis=0)
         
-        coords_x, coords_y = coords[:, 0], coords[:, 1]
-        coords_y += shift
-        return rgb, tf.stack([coords_x, coords_y], axis=1)
+        kpts_x, kpts_y = c_kpts[:, 0], c_kpts[:, 1]
+        kpts_y += shift
+        c_kpts = tf.stack([kpts_x, kpts_y], axis=1)
+
+        cntrs_x, cntrs_y = c_cntrs[:, 0], c_cntrs[:, 1]
+        cntrs_y += shift
+        c_cntrs = tf.stack([cntrs_x, cntrs_y], axis=1)
+        
+        return rgb, c_kpts, c_cntrs
 
 
 class AugmentationRGB():
@@ -112,20 +131,6 @@ class AugmentationRGB():
             L.RandomBrightness(factor=max_brightness, value_range=(-1,1)),
             ])
 
-    def augment(self, rgb, depth, coords):
+    def augment(self, rgb, c_kpts, c_cntrs):
         rgb = self.model(rgb)
-        return rgb, depth, coords
-
-
-def create_dilation_model(img_size):
-    """ 
-        Returns a model to be used in preprocessing that perform an opening operation to 
-        the Mask in order to include a bigger portion of the RGB image. 
-    """
-    img_input = L.Input(img_size + (3,))
-    dep_input = L.Input(img_size + (1,))
-    mask = L.Lambda(lambda x: 1. - tf.cast(tf.math.equal(x, 0), dtype=tf.float32))(dep_input)
-    mask =   L.MaxPool2D(pool_size=(20, 20), strides=(1, 1), padding='same')(mask)
-    masked = L.Multiply()([img_input, mask])
-
-    return Model(inputs=[img_input, dep_input], outputs=masked)
+        return rgb, c_kpts, c_cntrs

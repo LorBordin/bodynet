@@ -73,41 +73,78 @@ def sum_density_maps(pdfs):
 
 def crop_roi(
         img, 
-        depth, 
-        coords, 
+        c_kpts, 
         probas, 
         labels, 
-        min_margin,
-        max_margin, 
-        thresh=0.05,
+        use_random_margin = False,
+        min_margin = 0.01,
+        mean_margin = .15, 
+        confidence_thres = .05,
     ):
-    """ Assume coords are in the shape (-1, 3) and img in format [H, W, C]""" 
-    margin = tf.random.normal(mean=0.15, stddev=.045, shape=())
-    margin = tf.where(margin<0, .01, margin)
+    """ Crops the iage focussing on the Region Of Interest (ROI). To get the 
+    ROI it uses the keypoints coordinates (labels if during training or 
+    previous predictions if in production).
     
-    above_thresh = probas>thresh
-    x_coords = tf.boolean_mask(coords[:, 0], above_thresh)
-    y_coords = tf.boolean_mask(coords[:, 1], above_thresh)
+    Assume coords are in the shape (-1, 3) and img in format [H, W, C]
 
+    Parameters
+    ----------
+    img : tf.tensor[float]
+        ...
+    c_kpts : tf.tensor[float]
+        ...
+    probas : tf.tensor[float]
+        ...
+    labels : ...
+        ...
+    use_random_margin : bool
+        ...
+    min_margin : float
+        ...
+    max_margin : float
+        ...
+    confidence_thres : float
+
+    Returns
+    -------
+    img_crop : ...
+        ...
+    new_labels : ...
+        ...
+    
+    """ 
+    # define margin 
+    if use_random_margin:
+        margin = tf.random.normal(mean=mean_margin, stddev=.045, shape=())
+        margin = tf.where(margin<0, min_margin, margin)
+    else:
+        margin = mean_margin
+    
+    # filter out low confidence predictions 
+    above_thresh = probas>confidence_thres
+    x_coords = tf.boolean_mask(c_kpts[:, 0], above_thresh)
+    y_coords = tf.boolean_mask(c_kpts[:, 1], above_thresh)
+    
+    # get keypoints extrema
     Xmin, Xmax = tf.math.reduce_min(x_coords), tf.math.reduce_max(x_coords)
     Ymin, Ymax = tf.math.reduce_min(y_coords), tf.math.reduce_max(y_coords)
 
-    if Xmax<=Xmin or Ymax<=Ymin:
+    if Xmax <= Xmin or Ymax <= Ymin:
         Xmax, Xmin = 1., 0.
         Ymax, Ymin = 1., 0.
 
-    coords = tf.convert_to_tensor((Xmin, Ymin, Xmax, Ymax))
-    coords += (-margin, -margin, margin, margin)
+    c_kpts = tf.convert_to_tensor((Xmin, Ymin, Xmax, Ymax))
+    c_kpts += (-margin, -margin, margin, margin)
 
     # pad coords
-    coords = tf.where(coords<0, 0., coords)
-    coords = tf.where(coords>1, 1., coords)
+    c_kpts = tf.where(c_kpts<0, 0., c_kpts)
+    c_kpts = tf.where(c_kpts>1, 1., c_kpts)
     
     # get new dimension to compute the rescale factor
-    new_h, new_w = coords[-1]-coords[1], coords[2]-coords[0]
+    new_h, new_w = c_kpts[-1]-c_kpts[1], c_kpts[2]-c_kpts[0]
 
     if new_h < .1 or new_w < .1:
-        coords = tf.convert_to_tensor((0., 0., 1., 1.))
+        c_kpts = tf.convert_to_tensor((0., 0., 1., 1.))
 
     # transform labels
     x_labels = labels[:, 0]
@@ -115,8 +152,8 @@ def crop_roi(
     z_labels = labels[:, 2]
 
     # shift origin
-    x_labels -= coords[0] 
-    y_labels -= coords[1] 
+    x_labels -= c_kpts[0] 
+    y_labels -= c_kpts[1] 
     
     # rescale
     x_labels /= new_w
@@ -130,12 +167,11 @@ def crop_roi(
     
     # convert to pixels
     H, W, _ = _ImageDimensions(img, 3)
-    coords *= (W, H, W, H)    
-    coords = tf.cast(coords, tf.int32)
+    c_kpts *= (W, H, W, H)    
+    c_kpts = tf.cast(c_kpts, tf.int32)
 
-    img_crop = img[coords[1]:coords[3], coords[0]:coords[2]]
-    depth_crop = depth[coords[1]:coords[3], coords[0]:coords[2]]
+    img_crop = img[c_kpts[1]:c_kpts[3], c_kpts[0]:c_kpts[2]]
 
-    return img_crop, depth_crop, new_labels
+    return img_crop, new_labels
 
 

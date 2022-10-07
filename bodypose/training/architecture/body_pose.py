@@ -16,7 +16,7 @@ class MoveNet(tf.keras.Model):
         Parameters
         ----------
         input_shapes: tuple
-            Input image shape.
+            Input image height, width and channels.
         strides: list           
             List of int corresponding to the desired strides.
         num_joints: int

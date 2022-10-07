@@ -25,7 +25,6 @@ will allow to compare the network performances with the Movenet trained by the G
 - Refinements ...
 
 ### NextSteps
-- adjust create_labels function
-- adjust load_TFRecords_dataset function
+- create training notebook
 - adjust crop_roi function
-- adjust augmentation functions in order to incorporate the centres coordinates
+

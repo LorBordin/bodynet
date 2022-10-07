@@ -1,6 +1,6 @@
-#from .preprocessing import create_density_map
 #from .preprocessing import create_joint_mask
-#from .preprocessing import create_depth_map
+from .preprocessing import create_density_maps
+from .preprocessing import sum_density_maps
 #from .preprocessing import mask_img
 from .preprocessing import crop_roi
 from config import N_KPTS
@@ -80,9 +80,9 @@ def pad_and_augment(
     target_size : tuple[int]
         Target image heigth and width
     roi_prob : float
-        Probability to apply the 'focus_on_roi' augmentation, by default -1.
+        Probability to apply the 'focus_on_roi' augmentation, by default to -1.
     augmentations : list[function]
-        List of image augmetations.
+        List of image augmetations, by default to '[]'.
 
     Returns
     -------
@@ -109,9 +109,10 @@ def pad_and_augment(
             c_kpts,
             vis_kpts, 
             c_kpts, 
+            use_random_margin = True,
             min_margin=.05, 
-            max_margin=0.15, 
-            thresh=0.05
+            mean_margin=0.15, 
+            confidence_thres=0.05
             )
     
     # pad
@@ -145,51 +146,46 @@ def pad_and_augment(
     return img, c_kpts, c_cntrs
 
 
-def create_labels(joints_coords, grid_dim, exclude_joints=[]):
-    """ Given the joints_coords list it created the labels used for the training.
-        - Outputs: y: tensor [grid_dim**2, num_joints*4+1]: 
-                      ([1] object pdf, [n_joints] pdfs, [n_joints * 2] offsets x/y, [n_joints] z_coords)
-    """
-    # exclude some joints from detection
-    if len(exclude_joints)!=0:
-        mask = create_joint_mask(
-            JOINTS_NAME, 
-            tf.convert_to_tensor(exclude_joints)
-            )
-        joints_coords = tf.boolean_mask(joints_coords, mask)
-    n_joints = 30 - len(exclude_joints)
+def create_labels(c_kpts, c_cntrs, grid_dim):
+    """ Creates the labels use for training. Returns two types of labels:
+    i.  keypoints normalised coordinates
+    ii. Probability maps for the person centres and the keypoints
 
+    Parameters
+    ----------
+    c_kpts : tf.tensor[float]
+        Decoded keypoints (normalised) coordinates.
+    c_cntrs : tf.tensor[float]
+        Decoded centers (normalised) coordinates.
+    grid_dim : int
+        Size of the pdf. Must be equal to the FPN output.
+
+    Returns
+    -------
+    y_coords : tf.tensor[float]
+        Tensor of coordinates: [vis_coords, x_cord, y_coord, x_coord, y_coord].
+    pdfs : tf.tensor[float]
+        Probability density maps.
+    """
     ### MAIN LABELS ###
-    probas = tf.cast(
-        tf.cast(tf.math.reduce_sum(joints_coords,axis=-1), dtype=tf.bool), 
-        tf.float32)
-    probas = tf.expand_dims(probas, axis=-1)
-    y_coords = tf.concat(
-        [probas, joints_coords, joints_coords[:, :2]],
-        axis=-1
-        )
+    # visible coordinates
+    vis_kpts = tf.where(c_kpts[:,-1]==1., 1., 0.)
+    vis_kpts = tf.expand_dims(vis_kpts, axis=-1)
+    y_coords = tf.concat([vis_kpts, c_kpts[:, :2], c_kpts[:, :2]], axis=-1)
 
     ### AUXILIARY LABELS ###
-    # create the body center map
-    mask = tf.concat([probas==1]*2, axis=-1)
-    body_center = tf.reshape(
-        tf.boolean_mask(joints_coords[:, :2], mask),
-        (-1, 2)
-        )
-    body_center = tf.math.reduce_mean(body_center, axis=0)
-    center_heatmap = create_density_map(
-        tf.expand_dims(body_center, axis=0),
-        grid_dim
+    
+    # create the body centres map
+    centres_heatmap = sum_density_maps(
+        create_density_maps(tf.expand_dims(c_cntrs, axis=0), grid_dim)
         )
 
     # create the joint heatmaps
-    joint_heatmaps = create_density_map(joints_coords, grid_dim)
+    kpts_heatmaps = create_density_maps(c_kpts, grid_dim)
     
-    y_aux = tf.concat([center_heatmap, joint_heatmaps], axis=-1)
-
-    y_fake = tf.ones((grid_dim, grid_dim, n_joints+1))
+    y_pdfs = tf.concat([centres_heatmap, kpts_heatmaps], axis=-1)
     
-    return y_coords, y_aux, y_fake
+    return y_coords, y_pdfs
 
 
 def decode_samples(
@@ -225,42 +221,67 @@ def decode_samples(
     return raw_ds
 
 
-def load_TFRecords_dataset(dirPath, 
-                           batch_size=8, 
-                           img_size=(416, 312),
-                           target_size=(416, 416),            
-                           grid_dim = 52,
-                           augmentations=[], 
-                           masked_img = False,
-                           focus_on_roi = False,
-                           roi_thresh=.1,
-                           exclude_joints = []):
+def load_TFRecords_dataset(
+    filePaths = [],
+    dirPath = "", 
+    batch_size=8, 
+    img_size=(416, 312),
+    target_size=(416, 416),            
+    grid_dim = 52,
+    augmentations=[], 
+    roi_thresh=.1,
+    ):
     """
         Datasetloader. Operations:
-        - loads, normalise and resize with pad RGB and DEPTH,
-        - loads the joints coords list (2D_coords, z_coords),
-        - shuffles the imgs,
-        - generates the labels from the coords list, 
-        - batches the data
+      i. loads the RGB image,
+     ii. loads the keypoints  and person centres coords list,
+    iii. performas image normalisazion and augmentation
+     iv. generates the labels
+      v. shuffles and batches
+
+    Parameters
+    ----------
+    filePaths : list[str], optional
+        Tfrecords list paths.
+    dirPath : str, optional
+        Path to the directory containing the TFRecords.
+    batch_size : int
+        Batch size, by default to 8.
+    img_size : tuple[int]
+        Image height and width as fetched from the TFRecords, by default to 
+        (416, 416).
+    target_size : tuple[int]
+        Target image heigth and width, by default to (416, 416).
+    grid_dim : int
+        Size of the probability density maps. Must be equal to the FPN output.
+    augmentations : list[function]
+        List of image augmetations, by default to '[]'.
+    roi_thresh : float
+        Probability to apply the 'focus_on_roi' augmentation, by default to -1.
+    
+    Returns
+    -------
+    output_ds : tf.data.Dataset
+        Final datset loader.
     """
     
     # list the files
-    filePaths = list(paths.list_files(dirPath, contains="tfrecord"))
+    if len(filePaths) == 0:
+        filePaths = list(paths.list_files(dirPath, contains="tfrecord"))
     n_readers = len(filePaths)
     
-    preprocess = lambda x, y, z : pad_and_augment(
-        x, 
-        y, 
-        z, 
+    preprocess = lambda img, kpts, cntrs : pad_and_augment(
+        img, 
+        kpts, 
+        cntrs, 
         target_size, 
-        focus_on_roi, 
         roi_prob=roi_thresh, 
         augmentations=augmentations
         )
-    mk_labels = lambda x, y, z: ((x, y), create_labels(
-        z, 
-        grid_dim, 
-        exclude_joints=exclude_joints)
+    mk_labels = lambda img, kpts, cntrs: (img, create_labels(
+        kpts,
+        cntrs, 
+        grid_dim)
         )
 
     # create the dataset
@@ -268,11 +289,6 @@ def load_TFRecords_dataset(dirPath,
     output_ds = raw_ds.map(preprocess, num_parallel_calls=AUTOTUNE)
     output_ds = output_ds.map(mk_labels, num_parallel_calls=AUTOTUNE)
     output_ds = output_ds.shuffle(buffer_size=1000).batch(batch_size)
-
-    # apply binary mask on img based on depth 
-    if masked_img:
-        output_ds = output_ds.map(lambda x, y: (mask_img(x), y))
-
     output_ds = output_ds.prefetch(AUTOTUNE)
     
     return output_ds
