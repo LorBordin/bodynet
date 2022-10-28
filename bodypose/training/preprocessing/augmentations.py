@@ -3,6 +3,27 @@ from tensorflow.keras.models import Model
 from tensorflow.keras import Sequential
 import tensorflow.keras.layers as L
 import tensorflow as tf
+from config import KEYPOINT_DICT 
+
+keypoints_idxs = [
+    KEYPOINT_DICT['nose'], 
+    KEYPOINT_DICT['right_eye'],
+    KEYPOINT_DICT['left_eye'],
+    KEYPOINT_DICT['right_ear'],
+    KEYPOINT_DICT['left_ear'],
+    KEYPOINT_DICT['right_shoulder'],
+    KEYPOINT_DICT['left_shoulder'],
+    KEYPOINT_DICT['right_elbow'],
+    KEYPOINT_DICT['left_elbow'],
+    KEYPOINT_DICT['right_wrist'],
+    KEYPOINT_DICT['left_wrist'],
+    KEYPOINT_DICT['right_hip'],
+    KEYPOINT_DICT['left_hip'],
+    KEYPOINT_DICT['right_knee'],
+    KEYPOINT_DICT['left_knee'],
+    KEYPOINT_DICT['right_ankle'],
+    KEYPOINT_DICT['left_ankle']
+    ]
 
 
 class HorizontalFlip():
@@ -18,7 +39,7 @@ class HorizontalFlip():
             List of int that take into account the flip of the right/left keypoints.
 
     """
-    def __init__(self, probability, keypoints_idxs):
+    def __init__(self, probability, keypoints_idxs=keypoints_idxs):
         self.probability = probability
         self.keypoints_idxs = keypoints_idxs
 

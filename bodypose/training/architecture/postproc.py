@@ -29,7 +29,6 @@ def create_postproc_model(inputs, name="post_processing"):
     
     centermap, k_offsets, k_heatmaps, c_offsets = inputs
 
-    print(k_heatmaps.shape)
     grid_dim, num_joints = k_heatmaps.shape[2:]
 
     aux_outputs = L.Concatenate(axis=-1)([centermap, k_heatmaps])
@@ -118,6 +117,6 @@ def create_postproc_model(inputs, name="post_processing"):
     outputs = L.Concatenate(axis=-1)([probas, joint_coords, raw_joint_coords])
     outputs = L.Reshape((num_joints, 5), name="output")(outputs)
 
-    post_proc = Model(inputs, [outputs, aux_outputs, aux_outputs_2], name=name)
+    post_proc = Model(inputs, [outputs, aux_outputs], name=name)
     
     return post_proc

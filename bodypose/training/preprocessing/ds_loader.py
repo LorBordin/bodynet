@@ -103,17 +103,17 @@ def pad_and_augment(
         img, c_kpts, c_cntrs = op.augment(img, c_kpts, c_cntrs)
     
     roi_proba = tf.random.uniform(minval=0, maxval=1, shape=())
-    if roi_proba<roi_prob:
-        img, c_kpts = crop_roi(
-            img,
-            c_kpts,
-            vis_kpts, 
-            c_kpts, 
-            use_random_margin = True,
-            min_margin=.05, 
-            mean_margin=0.15, 
-            confidence_thres=0.05
-            )
+    #if roi_proba<roi_prob:
+    #    img, c_kpts = crop_roi(
+    #        img,
+    #        c_kpts,
+    #        vis_kpts, 
+    #        c_kpts, 
+    #        use_random_margin = True,
+    #        min_margin=.05, 
+    #        mean_margin=0.15, 
+    #        confidence_thres=0.05
+    #        )
     
     # pad
     height, width, _ = _ImageDimensions(img, 3)
@@ -138,7 +138,7 @@ def pad_and_augment(
         cntrs_y = pad + cntrs_y * ratio
 
     c_kpts = tf.stack([kpts_x, ktps_y], axis=-1)
-    c_cntrs= tf.stack([cntrs_x, cntrs_x], axis=-1)
+    c_cntrs= tf.stack([cntrs_x, cntrs_y], axis=-1)
     
     vis_mask = tf.stack([vis_kpts]*2, axis=-1)
     c_kpts *= vis_mask
@@ -177,7 +177,7 @@ def create_labels(c_kpts, c_cntrs, grid_dim):
     
     # create the body centres map
     centres_heatmap = sum_density_maps(
-        create_density_maps(tf.expand_dims(c_cntrs, axis=0), grid_dim)
+        create_density_maps(c_cntrs, grid_dim)
         )
 
     # create the joint heatmaps
@@ -225,11 +225,12 @@ def load_TFRecords_dataset(
     filePaths = [],
     dirPath = "", 
     batch_size=8, 
-    img_size=(416, 312),
-    target_size=(416, 416),            
+    img_size=(416, 416), 
+    target_size=(416,416),           
     grid_dim = 52,
     augmentations=[], 
     roi_thresh=.1,
+    create_heatmaps = True,
     ):
     """
         Datasetloader. Operations:
@@ -258,6 +259,8 @@ def load_TFRecords_dataset(
         List of image augmetations, by default to '[]'.
     roi_thresh : float
         Probability to apply the 'focus_on_roi' augmentation, by default to -1.
+    create_heatmaps : bool
+        ... Defaults to True.
     
     Returns
     -------
@@ -274,9 +277,9 @@ def load_TFRecords_dataset(
         img, 
         kpts, 
         cntrs, 
-        target_size, 
+        target_size=target_size, 
+        augmentations=augmentations,
         roi_prob=roi_thresh, 
-        augmentations=augmentations
         )
     mk_labels = lambda img, kpts, cntrs: (img, create_labels(
         kpts,
@@ -287,8 +290,9 @@ def load_TFRecords_dataset(
     # create the dataset
     raw_ds = decode_samples(filePaths, img_size, n_readers)
     output_ds = raw_ds.map(preprocess, num_parallel_calls=AUTOTUNE)
-    output_ds = output_ds.map(mk_labels, num_parallel_calls=AUTOTUNE)
-    output_ds = output_ds.shuffle(buffer_size=1000).batch(batch_size)
+    if create_heatmaps:
+        output_ds = output_ds.map(mk_labels, num_parallel_calls=AUTOTUNE)
+        output_ds = output_ds.shuffle(buffer_size=1000).batch(batch_size)
     output_ds = output_ds.prefetch(AUTOTUNE)
     
     return output_ds
