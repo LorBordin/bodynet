@@ -1,11 +1,12 @@
 import cv2
+from config import KEYPOINT_DICT
 
 RED = (0, 0, 204)
 GREEN = (0, 204, 0)
 WHITE =  (255, 255, 255)
 BLUE = (204, 0, 0)
 
-def draw_keypoints(img, coords, thresh, keypoints):
+def draw_keypoints(img, coords, thresh, keypoints=KEYPOINT_DICT):
     """
     Draws the skeleton of a person. Keypoints below a given threshold are 
     ignored.

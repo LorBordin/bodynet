@@ -4,8 +4,8 @@ movenet_thunder_path = os.sep.join(["models", "movenet_thunder_f16.tflite"])
 movenet_lightning_path = os.sep.join(["models", "movenet_lightning_f16.tflite"])
 
 KEYPOINT_DICT = {
-    'nose': 0,
-    'left_eye': 1,
+    'nose': 0,            
+    'left_eye': 1, 
     'right_eye': 2,
     'left_ear': 3,
     'right_ear': 4,

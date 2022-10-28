@@ -35,7 +35,7 @@ def create_density_maps(peak_coords: tf.Tensor, grid_dim: int):
     
     # define the PDFs
     X, Y = peak_coords[:,0], peak_coords[:,1]
-    sigma = 1.0 / grid_dim
+    sigma = 1.0 / 2 / grid_dim
     pdfs = - (tf.math.pow(XX-X, 2) + tf.math.pow(YY-Y, 2)) \
         / (2*tf.math.pow(sigma, 2))
     pdfs = tf.math.exp(pdfs)
@@ -64,11 +64,11 @@ def sum_density_maps(pdfs):
         Returns
         -------
         pdf: tf.Tensor
-            Multi peaked density map of shape (grid_dim ** 2).
+            Multi peaked density map of shape (grid_dim ** 2, 1).
     """
     pdf = tf.math.reduce_sum(pdfs, axis=-1)
     pdf = tf.where(pdf>1.0, 1.0, pdf)
-    return pdf
+    return tf.expand_dims(pdf, axis=-1)
 
 
 def crop_roi(
