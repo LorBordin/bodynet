@@ -169,7 +169,7 @@ def create_labels(c_kpts, c_cntrs, grid_dim):
     """
     ### MAIN LABELS ###
     # visible coordinates
-    vis_kpts = tf.where(c_kpts[:,-1]==1., 1., 0.)
+    vis_kpts = tf.where(tf.math.reduce_sum(c_kpts, axis=-1)==0., 0., 1.)
     vis_kpts = tf.expand_dims(vis_kpts, axis=-1)
     y_coords = tf.concat([vis_kpts, c_kpts[:, :2], c_kpts[:, :2]], axis=-1)
 
@@ -230,7 +230,6 @@ def load_TFRecords_dataset(
     grid_dim = 52,
     augmentations=[], 
     roi_thresh=.1,
-    create_heatmaps = True,
     ):
     """
         Datasetloader. Operations:
@@ -259,8 +258,6 @@ def load_TFRecords_dataset(
         List of image augmetations, by default to '[]'.
     roi_thresh : float
         Probability to apply the 'focus_on_roi' augmentation, by default to -1.
-    create_heatmaps : bool
-        ... Defaults to True.
     
     Returns
     -------
@@ -290,9 +287,8 @@ def load_TFRecords_dataset(
     # create the dataset
     raw_ds = decode_samples(filePaths, img_size, n_readers)
     output_ds = raw_ds.map(preprocess, num_parallel_calls=AUTOTUNE)
-    if create_heatmaps:
-        output_ds = output_ds.map(mk_labels, num_parallel_calls=AUTOTUNE)
-        output_ds = output_ds.shuffle(buffer_size=1000).batch(batch_size)
+    output_ds = output_ds.map(mk_labels, num_parallel_calls=AUTOTUNE)
+    output_ds = output_ds.shuffle(buffer_size=1000).batch(batch_size)
     output_ds = output_ds.prefetch(AUTOTUNE)
     
     return output_ds
