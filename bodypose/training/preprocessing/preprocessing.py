@@ -75,13 +75,15 @@ def crop_roi(
         img, 
         c_kpts, 
         probas, 
+        centres,
         labels, 
         use_random_margin = False,
         min_margin = 0.01,
         mean_margin = .15, 
         confidence_thres = .05,
     ):
-    """ Crops the iage focussing on the Region Of Interest (ROI). To get the 
+    """ 
+    Crops the image focussing on the Region Of Interest (ROI). To get the 
     ROI it uses the keypoints coordinates (labels if during training or 
     previous predictions if in production).
     
@@ -149,21 +151,34 @@ def crop_roi(
     # transform labels
     x_labels = labels[:, 0]
     y_labels = labels[:, 1]
-    z_labels = labels[:, 2]
+    centre_x = centres[:, 0]
+    centre_y = centres[:, 1]
 
     # shift origin
     x_labels -= c_kpts[0] 
     y_labels -= c_kpts[1] 
-    
+    centre_x -= c_kpts[0]
+    centre_y -= c_kpts[1]
+
     # rescale
     x_labels /= new_w
     y_labels /= new_h
+    centre_x /= new_w
+    centre_y /= new_h
 
     x_labels = tf.expand_dims(x_labels, axis=-1)
     y_labels = tf.expand_dims(y_labels, axis=-1)
-    z_labels = tf.expand_dims(z_labels, axis=-1)
+    centre_x = tf.expand_dims(centre_x, axis=-1)
+    centre_y = tf.expand_dims(centre_y, axis=-1)    
 
-    new_labels = tf.concat([x_labels, y_labels, z_labels], axis=-1)
+    centres_mask = tf.math.logical_or(
+        tf.math.logical_and(centre_x > 0, centre_x < new_w),
+        tf.math.logical_and(centre_y > 0, centre_y < new_h)
+        )
+
+    new_labels = tf.concat([x_labels, y_labels], axis=-1)
+    new_centres = tf.concat([centre_x, centre_y], axis=-1)
+    new_centres = tf.boolean_mask(new_centres,  centres_mask)
     
     # convert to pixels
     H, W, _ = _ImageDimensions(img, 3)
@@ -172,6 +187,6 @@ def crop_roi(
 
     img_crop = img[c_kpts[1]:c_kpts[3], c_kpts[0]:c_kpts[2]]
 
-    return img_crop, new_labels
+    return img_crop, new_labels, new_centres
 
 

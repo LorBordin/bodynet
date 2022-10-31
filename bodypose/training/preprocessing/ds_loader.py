@@ -5,6 +5,7 @@ from .preprocessing import sum_density_maps
 from .preprocessing import crop_roi
 from config import N_KPTS
 
+import random
 import numpy as np
 import tensorflow as tf
 from imutils import paths
@@ -58,6 +59,7 @@ def unpack_data(packed_dict, img_size):
     return img, c_kpts, c_cntrs
 
 
+@tf.function
 def pad_and_augment(
         img, 
         c_kpts, 
@@ -102,18 +104,19 @@ def pad_and_augment(
     for op in augmentations:
         img, c_kpts, c_cntrs = op.augment(img, c_kpts, c_cntrs)
     
-    roi_proba = tf.random.uniform(minval=0, maxval=1, shape=())
-    #if roi_proba<roi_prob:
-    #    img, c_kpts = crop_roi(
-    #        img,
-    #        c_kpts,
-    #        vis_kpts, 
-    #        c_kpts, 
-    #        use_random_margin = True,
-    #        min_margin=.05, 
-    #        mean_margin=0.15, 
-    #        confidence_thres=0.05
-    #        )
+    roi_proba = random.uniform(0, 1) #tf.random.uniform(minval=0, maxval=1, shape=())
+    if roi_proba<roi_prob:
+        img, c_kpts, c_cntrs = crop_roi(
+            img,
+            c_kpts,
+            vis_kpts,
+            c_cntrs, 
+            c_kpts, 
+            use_random_margin = True,
+            min_margin=.05, 
+            mean_margin=0.15, 
+            confidence_thres=0.05
+            )
     
     # pad
     height, width, _ = _ImageDimensions(img, 3)
@@ -230,6 +233,7 @@ def load_TFRecords_dataset(
     grid_dim = 52,
     augmentations=[], 
     roi_thresh=.1,
+    debug=False,
     ):
     """
         Datasetloader. Operations:
@@ -288,7 +292,10 @@ def load_TFRecords_dataset(
     raw_ds = decode_samples(filePaths, img_size, n_readers)
     output_ds = raw_ds.map(preprocess, num_parallel_calls=AUTOTUNE)
     output_ds = output_ds.map(mk_labels, num_parallel_calls=AUTOTUNE)
-    output_ds = output_ds.shuffle(buffer_size=1000).batch(batch_size)
+    if not debug:
+        output_ds = output_ds.shuffle(buffer_size=1000).batch(batch_size)
+    else: 
+        output_ds = output_ds.batch(batch_size)
     output_ds = output_ds.prefetch(AUTOTUNE)
     
     return output_ds
