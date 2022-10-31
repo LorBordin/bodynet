@@ -174,7 +174,7 @@ def crop_roi(
     centres_mask = tf.math.logical_or(
         tf.math.logical_and(centre_x > 0, centre_x < new_w),
         tf.math.logical_and(centre_y > 0, centre_y < new_h)
-        )
+        )[:, 0]
 
     new_labels = tf.concat([x_labels, y_labels], axis=-1)
     new_centres = tf.concat([centre_x, centre_y], axis=-1)
