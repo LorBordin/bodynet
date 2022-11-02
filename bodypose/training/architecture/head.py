@@ -52,7 +52,7 @@ def create_Head(inputs,
     k_name = name+"_k_offsets"
     k_offsets = Conv3x3Module(out_channels, activation, k_name, use_depthwise)(inputs)
     k_offsets = L.Conv2D(num_joints*2, (1, 1), name=k_name)(k_offsets)
-    #k_offsets = L.Activation("tanh", name=k_name+"_act")(k_offsets)
+    k_offsets = L.Activation("tanh", name=k_name+"_act")(k_offsets)
 
     # Keypoints heatmaps 
     h_name = name+"_k_heatmaps"

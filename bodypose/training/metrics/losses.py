@@ -23,7 +23,6 @@ def FocalLoss(y_true, y_pred, num_joints):
     return loss
 
 
-
 # *** DOES NOT WORRK RIGHT NOW ***
 #def DeltaJointsLoss(y_true, y_pred, j_list):
 #    """ 

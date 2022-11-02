@@ -100,10 +100,6 @@ def pad_and_augment(
     # visible coordinates
     vis_kpts = tf.where(c_kpts[:,-1]==1., 1., 0.)
 
-    # augment the images
-    for op in augmentations:
-        img, c_kpts, c_cntrs = op.augment(img, c_kpts, c_cntrs)
-    
     roi_proba = random.uniform(0, 1) #tf.random.uniform(minval=0, maxval=1, shape=())
     if roi_proba<roi_prob:
         img, c_kpts, c_cntrs = crop_roi(
@@ -117,6 +113,10 @@ def pad_and_augment(
             mean_margin=0.15, 
             confidence_thres=0.05
             )
+    
+    # augment the images
+    for op in augmentations:
+        img, c_kpts, c_cntrs = op.augment(img, c_kpts, c_cntrs)
     
     # pad
     height, width, _ = _ImageDimensions(img, 3)
