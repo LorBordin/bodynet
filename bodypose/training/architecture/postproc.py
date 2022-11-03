@@ -117,6 +117,7 @@ def create_postproc_model(inputs, name="post_processing"):
     outputs = L.Concatenate(axis=-1)([probas, joint_coords, raw_joint_coords])
     outputs = L.Reshape((num_joints, 5), name="output")(outputs)
 
-    post_proc = Model(inputs, [outputs, aux_outputs, aux_outputs_2], name=name)
+    #post_proc = Model(inputs, [outputs, aux_outputs, aux_outputs_2], name=name)
+    post_proc = Model(inputs, [outputs, aux_outputs], name=name)
     
     return post_proc
