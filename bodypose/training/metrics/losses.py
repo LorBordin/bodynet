@@ -123,7 +123,7 @@ def RegressionLoss2D(y_true, y_pred, threshold=0.5, j_list=[]):
     y_true_c = tf.gather(y_true, [1,2], axis=-1)
     y_pred_c = tf.gather(y_pred, [1,2], axis=-1)
 
-    # MSE Loss on coords 3D
+    # MSE Loss on coords 2D
     mse = keras.losses.mse(y_true_c, y_pred_c)
     mse_loss = tf.math.reduce_sum(mse)
     
@@ -140,7 +140,7 @@ def RegressionLoss2D(y_true, y_pred, threshold=0.5, j_list=[]):
     #delta_loss = tf.math.reduce_sum(delta_loss)
     
     #return LAMBDA * (mse_loss + delta_loss + mse_loss_raw) + binary_cross_entropy + mse_loss_raw
-    return LAMBDA * (mse_loss + mse_loss_raw) + binary_cross_entropy + mse_loss_raw
+    return LAMBDA * (mse_loss + binary_cross_entropy) + mse_loss_raw
 
 
 @tf.function
