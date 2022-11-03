@@ -1,12 +1,11 @@
 import cv2
-from config import KEYPOINT_DICT
 
 RED = (0, 0, 204)
 GREEN = (0, 204, 0)
 WHITE =  (255, 255, 255)
 BLUE = (204, 0, 0)
 
-def draw_keypoints(img, coords, thresh, keypoints=KEYPOINT_DICT):
+def draw_keypoints(img, coords, thresh, keypoints):
     """
     Draws the skeleton of a person. Keypoints below a given threshold are 
     ignored.
@@ -28,36 +27,45 @@ def draw_keypoints(img, coords, thresh, keypoints=KEYPOINT_DICT):
         Output image. 
     """
     # head
-    img = draw_bone(
-        img, 
-        coords[keypoints["left_eye"]], 
-        coords[keypoints["left_ear"]], 
-        thresh,  
-        color=RED
-        )    
-    img = draw_bone(
-        img, 
-        coords[keypoints["left_eye"]], 
-        coords[keypoints["nose"]], 
-        thresh,  
-        color=RED
-        )
+    if keypoints.get("left_eye", False):
+        img = draw_bone(
+            img, 
+            coords[keypoints["left_eye"]], 
+            coords[keypoints["left_ear"]], 
+            thresh,  
+            color=RED
+            )    
+        img = draw_bone(
+            img, 
+            coords[keypoints["left_eye"]], 
+            coords[keypoints["nose"]], 
+            thresh,  
+            color=RED
+            )
 
-    img = draw_bone(
-        img, 
-        coords[keypoints["right_eye"]], 
-        coords[keypoints["right_ear"]], 
-        thresh,  
-        color=GREEN
-        )
-    img = draw_bone(
-        img, 
-        coords[keypoints["right_eye"]], 
-        coords[keypoints["nose"]], 
-        thresh,  
-        color=GREEN
-        )
-    
+        img = draw_bone(
+            img, 
+            coords[keypoints["right_eye"]], 
+            coords[keypoints["right_ear"]], 
+            thresh,  
+            color=GREEN
+            )
+        img = draw_bone(
+            img, 
+            coords[keypoints["right_eye"]], 
+            coords[keypoints["nose"]], 
+            thresh,  
+            color=GREEN
+            )
+    elif keypoints.get("head_top", False):
+        img = draw_bone(
+            img, 
+            coords[keypoints["head_top"]], 
+            coords[keypoints["upper_neck"]], 
+            thresh,  
+            color=WHITE
+            )
+
     # arms
     img = draw_bone(
         img, 
@@ -121,34 +129,50 @@ def draw_keypoints(img, coords, thresh, keypoints=KEYPOINT_DICT):
         )
 
     # body
-    img = draw_bone(
-        img, 
-        coords[keypoints["left_shoulder"]], 
-        coords[keypoints["left_hip"]], 
-        thresh, 
-        color=WHITE
-        )
-    img = draw_bone(
-        img, 
-        coords[keypoints["right_shoulder"]],  
-        coords[keypoints["right_hip"]], 
-        thresh, 
-        color=WHITE
-        )
-    img = draw_bone(
-        img, 
-        coords[keypoints["left_shoulder"]],
-        coords[keypoints["right_shoulder"]], 
-        thresh, 
-        color=WHITE
-        )
-    img = draw_bone(
-        img, 
-        coords[keypoints["left_hip"]], 
-        coords[keypoints["right_hip"]], 
-        thresh, 
-        color=WHITE
-        )
+    if keypoints.get('left_shoulder', False):
+        img = draw_bone(
+            img, 
+            coords[keypoints["left_shoulder"]], 
+            coords[keypoints["left_hip"]], 
+            thresh, 
+            color=WHITE
+            )
+        img = draw_bone(
+            img, 
+            coords[keypoints["right_shoulder"]],  
+            coords[keypoints["right_hip"]], 
+            thresh, 
+            color=WHITE
+            )
+        img = draw_bone(
+            img, 
+            coords[keypoints["left_shoulder"]],
+            coords[keypoints["right_shoulder"]], 
+            thresh, 
+            color=WHITE
+            )
+        img = draw_bone(
+            img, 
+            coords[keypoints["left_hip"]], 
+            coords[keypoints["right_hip"]], 
+            thresh, 
+            color=WHITE
+            )
+    elif keypoints.get('pelvis', False):
+        img = draw_bone(
+            img, 
+            coords[keypoints["pelvis"]], 
+            coords[keypoints["thorax"]], 
+            thresh, 
+            color=WHITE
+            )
+        img = draw_bone(
+            img, 
+            coords[keypoints["upper_neck"]], 
+            coords[keypoints["thorax"]], 
+            thresh, 
+            color=WHITE
+            )
 
     # draw keypoints
     img = draw_point(img, coords[:, :2], color=WHITE, radius="small")

@@ -7,14 +7,14 @@ import cv2
 import os
 
 from bodypose.demo.graphics import draw_keypoints, draw_point
-from config import KEYPOINT_DICT
+from config import COCO_KEYPOINT_DICT, MPII_KEYPOINT_DICT
 
 green = (0, 255, 0)
 red =  (0, 0, 255)
 blue = (255, 0, 0)
 
-def main(imgPaths, labelPaths):
-    i = 0
+def main(imgPaths, labelPaths, idx, kpts_dict):
+    i = idx
 
     while i < len(imgPaths):
 
@@ -38,7 +38,7 @@ def main(imgPaths, labelPaths):
         img = cv2.imread(imgPath)
         H, W = img.shape[:2]
 
-        img = draw_keypoints(img, c_kpts, .5, KEYPOINT_DICT)
+        img = draw_keypoints(img, c_kpts, .5, kpts_dict)
         img = draw_point(img, c_cntrs)
 
         # reshape according to its size
@@ -76,6 +76,15 @@ def main(imgPaths, labelPaths):
             outImgName = ".".join(filename.split(".")[:-1]) + "_out.png"
             cv2.imwrite(outImgName, img)
             print(f"[INFO] Saved imgage with bboxes @ {outImgName}.")
+
+        # if s is pressed save the image with bboxes
+        elif key & 0xFF == ord("d"):
+            os.remove(imgPath)
+            os.remove(kptsTxtPath)
+            os.remove(cntrsTxtPath)
+            i+=1
+            print(f"[INFO] Removed image  and labels.")
+            cv2.destroyAllWindows()
     
     cv2.destroyAllWindows()
     sys.exit()
@@ -91,6 +100,10 @@ if __name__ == "__main__":
         help="path to directory")
     ap.add_argument("-l", "--label_dir",
         help="path to label directory")
+    ap.add_argument("--idx", type=int, default=0,
+        help="starting index.")
+    ap.add_argument("--ds", type=str, default='coco',
+        help="Dataset name")
     args = vars(ap.parse_args())
 
     # accept either a single image or an entire directory
@@ -107,4 +120,9 @@ if __name__ == "__main__":
     else:
         labelPaths = args["label_dir"]
 
-    main(imgPaths, labelPaths)
+    if args['ds']=='coco':
+        kpts_dict = COCO_KEYPOINT_DICT
+    elif args['ds']=='mpii':
+        kpts_dict = MPII_KEYPOINT_DICT
+
+    main(imgPaths, labelPaths, args["idx"], kpts_dict)

@@ -55,7 +55,7 @@ def TotalLoss_2D(y_true, y_pred, threshold=0.5, j_list=[]):
     y_true_reg, y_true_aux = y_true[0], y_true[1]
     y_pred_reg, y_pred_aux = y_pred[0], y_pred[1]
 
-    num_joints = 17 #tf.cast(y_pred.shape[1], tf.int32)
+    num_joints = tf.cast(y_pred.shape[1], tf.int32)
 
     ### PRIMARY LOSS ###
     # 1. select the probability
