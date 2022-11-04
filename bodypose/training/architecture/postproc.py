@@ -6,7 +6,7 @@ from .custom_layers import get_inverse_dist_grid
 from .custom_layers import get_max_mask
 from .custom_layers import grid_coords 
 
-def create_postproc_model(inputs, name="post_processing"):
+def create_postproc_model(inputs, name="post_processing", debug=False):
     """
         Returns a model to decode the movenet predictions.
         Postprocessing steps:
@@ -116,8 +116,10 @@ def create_postproc_model(inputs, name="post_processing"):
 
     outputs = L.Concatenate(axis=-1)([probas, joint_coords, raw_joint_coords])
     outputs = L.Reshape((num_joints, 5), name="output")(outputs)
-
-    #post_proc = Model(inputs, [outputs, aux_outputs, aux_outputs_2], name=name)
-    post_proc = Model(inputs, [outputs, aux_outputs], name=name)
+    
+    if debug:
+        post_proc = Model(inputs, [outputs, aux_outputs, aux_outputs_2], name=name)
+    else:
+        post_proc = Model(inputs, [outputs, aux_outputs], name=name)
     
     return post_proc
