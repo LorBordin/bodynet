@@ -68,17 +68,17 @@ def create_postproc_model(inputs, name="post_processing", debug=False):
 
     # Get Weighted Heatmaps
     inv_dist = L.Lambda(lambda x: get_inverse_dist_grid(x))([k_heatmaps, k_offsets])
-    k_heatmaps = L.Multiply()([k_heatmaps, inv_dist])
+    w_k_heatmaps = L.Multiply()([k_heatmaps, inv_dist])
     
     # apply softmax to weigthed Heatmaps
-    k_heatmaps = L.Reshape((grid_dim * grid_dim, num_joints))(k_heatmaps)
-    k_heatmaps = L.Softmax()(k_heatmaps)
-    k_heatmaps = L.Reshape((grid_dim, grid_dim, num_joints), name="weighted_heatmaps")(k_heatmaps)
+    #w_k_heatmaps = L.Reshape((grid_dim * grid_dim, num_joints))(w_k_heatmaps)
+    #w_k_heatmaps = L.Softmax()(w_k_heatmaps)
+    #w_k_heatmaps = L.Reshape((grid_dim, grid_dim, num_joints), name="weighted_heatmaps")(w_k_heatmaps)
 
-    aux_outputs_2 = L.Concatenate(axis=-1)([w_centermap, k_heatmaps])
+    aux_outputs_2 = L.Concatenate(axis=-1)([w_centermap, w_k_heatmaps])
     aux_outputs_2 = L.Reshape((grid_dim * grid_dim, num_joints+1), name="aux_output_2")(aux_outputs_2)
 
-    jointmasks = L.Lambda(lambda x: get_max_mask(x))(k_heatmaps)
+    jointmasks = L.Lambda(lambda x: get_max_mask(x))(w_k_heatmaps)
 
     # Get the joints coordinates
     xx = L.Lambda(lambda x: grid_coords(x, axis=1))(jointmasks)
@@ -90,8 +90,8 @@ def create_postproc_model(inputs, name="post_processing", debug=False):
     y_j = L.GlobalMaxPooling2D()(y_j) 
 
     # Get the joint offsets
-    jointmasks = L.Concatenate()([jointmasks, jointmasks])
-    c_offsets = L.Multiply()([c_offsets, jointmasks])
+    jointmasks_offset = L.Concatenate()([jointmasks, jointmasks])
+    c_offsets = L.Multiply()([c_offsets, jointmasks_offset])
     c_offsets = L.GlobalMaxPooling2D()(c_offsets)  
     c_offsets = L.Lambda(lambda x: x / tf.cast(grid_dim, tf.float32))(c_offsets)
 
@@ -102,7 +102,8 @@ def create_postproc_model(inputs, name="post_processing", debug=False):
     person_probas = L.GlobalMaxPooling2D()(person_probas)
     person_probas = L.Activation("sigmoid")(person_probas)
 
-    keypoints_probas = L.GlobalMaxPooling2D()(k_heatmaps)
+    keypoints_probas = L.Multiply()([k_heatmaps, jointmasks])
+    keypoints_probas = L.GlobalMaxPooling2D()(keypoints_probas)
     probas = L.Multiply()([person_probas, keypoints_probas])
     
     # Reshape before concatenate the outputs
