@@ -115,13 +115,15 @@ def RegressionLoss2D(y_true, y_pred, threshold=0.5, j_list=[]):
     
     # 2. Deal with coordinates
     # exclude non visible joints coords
-    threshold_mask = tf.reshape(tf.where(y_true_proba>threshold, 1., 0.), (-1, num_joints, 1))
-    y_true *= threshold_mask
-    y_pred *= threshold_mask
-
+    threshold_mask = y_true_proba > threshold
+    threshold_mask = tf.concat([threshold_mask] * 2, axis=-1)
+    
     # select coords
     y_true_c = tf.gather(y_true, [1,2], axis=-1)
     y_pred_c = tf.gather(y_pred, [1,2], axis=-1)
+
+    y_true_c = tf.boolean_mask(y_true_c, threshold_mask)
+    y_pred_c = tf.boolean_mask(y_pred_c, threshold_mask)
 
     # MSE Loss on coords 2D
     mse = keras.losses.mse(y_true_c, y_pred_c)
@@ -130,6 +132,10 @@ def RegressionLoss2D(y_true, y_pred, threshold=0.5, j_list=[]):
     # select RAW coords
     y_true_raw_c = tf.gather(y_true, [3,4], axis=-1)
     y_pred_raw_c = tf.gather(y_pred, [3,4], axis=-1)
+
+    y_true_raw_c = tf.boolean_mask(y_true_raw_c, threshold_mask)
+    y_pred_raw_c = tf.boolean_mask(y_pred_raw_c, threshold_mask)
+
     
     # MSE Loss on RAW coords 2D
     mse_raw = keras.losses.mse(y_true_raw_c, y_pred_raw_c)
@@ -146,7 +152,7 @@ def RegressionLoss2D(y_true, y_pred, threshold=0.5, j_list=[]):
 @tf.function
 def AuxiliaryLoss(y_true, y_pred):
     
-    num_joints = tf.cast(tf.math.sqrt(tf.cast(y_pred.shape[1], tf.float32)), tf.int32)
+    num_joints = tf.cast(tf.math.sqrt(tf.cast(y_pred.shape[-2], tf.float32)), tf.int32)
     focal_loss = FocalLoss(y_true, y_pred, num_joints)
     
     return LAMBDA * focal_loss 
