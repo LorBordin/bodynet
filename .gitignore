@@ -1,9 +1,9 @@
 dataset/
 **/__pycache__/
 __pycache__/
-#bodypose/__pycache__/
-#demo/__pycache__/
-#dev_utils/__pycache__/
+bodypose/__pycache__/
+demo/__pycache__/
+dev_utils/__pycache__/
 
 .vscode/
 .ipynb_checkpoints/
