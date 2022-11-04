@@ -3,7 +3,9 @@ from .preprocessing import create_density_maps
 from .preprocessing import sum_density_maps
 #from .preprocessing import mask_img
 from .preprocessing import crop_roi
-from config import N_KPTS
+from config import MPII_KEYPOINT_DICT
+
+N_KPTS = len(MPII_KEYPOINT_DICT)
 
 import random
 import numpy as np
@@ -99,6 +101,7 @@ def pad_and_augment(
     
     # visible coordinates
     vis_kpts = tf.where(c_kpts[:,-1]==1., 1., 0.)
+    c_kpts = c_kpts[:, :2] * tf.expand_dims(vis_kpts, axis=1)
 
     roi_proba = random.uniform(0, 1) #tf.random.uniform(minval=0, maxval=1, shape=())
     if roi_proba<roi_prob:
@@ -118,6 +121,8 @@ def pad_and_augment(
     for op in augmentations:
         img, c_kpts, c_cntrs = op.augment(img, c_kpts, c_cntrs)
     
+    vis_kpts = tf.where(tf.math.reduce_sum(c_kpts, axis=-1)==0, 0., 1.)
+
     # pad
     height, width, _ = _ImageDimensions(img, 3)
     ratio = tf.cast(width/height, dtype=tf.float32)
@@ -143,8 +148,7 @@ def pad_and_augment(
     c_kpts = tf.stack([kpts_x, ktps_y], axis=-1)
     c_cntrs= tf.stack([cntrs_x, cntrs_y], axis=-1)
     
-    vis_mask = tf.stack([vis_kpts]*2, axis=-1)
-    c_kpts *= vis_mask
+    c_kpts *= tf.expand_dims(vis_kpts, axis=1)
 
     return img, c_kpts, c_cntrs
 

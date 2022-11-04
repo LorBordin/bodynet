@@ -177,6 +177,8 @@ def crop_roi(
         )[:, 0]
 
     new_labels = tf.concat([x_labels, y_labels], axis=-1)
+    new_labels *= tf.expand_dims(probas, axis=1)
+
     new_centres = tf.concat([centre_x, centre_y], axis=-1)
     new_centres = tf.boolean_mask(new_centres,  centres_mask)
     
