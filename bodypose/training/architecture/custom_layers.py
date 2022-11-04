@@ -2,7 +2,7 @@ from tensorflow.keras.regularizers import l2
 from tensorflow.keras import layers as L
 import tensorflow as tf 
 
-EPSILON = 1e-1
+EPSILON = 1e-2
 
 class DepthWiseConv2D(L.Layer):
     """ 
