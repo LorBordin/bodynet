@@ -38,12 +38,14 @@ def avgMDE_2D_RAW(y_true, y_pred):
 def Accuracy(y_true, y_pred, threshold=.5):
     """ Evaluate the percentage of joints which are correctly predicted as (not) visible. """
 
-    num_joints = tf.cast(y_pred.shape[1], tf.int32)
+    num_joints = tf.cast(y_pred.shape[-2], tf.int32)
 
-    true_proba = y_true[:,:,0]
-    pred_proba = y_pred[:,:,0]
+    true_proba = tf.gather(y_true, [0], axis=-1)
+    pred_proba = tf.gather(y_pred, [0], axis=-1)
 
-    true_thresh = tf.reshape(tf.where(true_proba>threshold, 1., 0.), (-1, num_joints, 1))
-    pred_thresh = tf.reshape(tf.where(pred_proba>threshold, 1., 0.), (-1, num_joints, 1))
+    true_thresh = tf.where(true_proba>threshold, 1., 0.)
+    pred_thresh = tf.where(pred_proba>threshold, 1., 0.)
 
-    return tf.math.reduce_sum(pred_thresh) / tf.math.reduce_sum(tf.ones_like(true_thresh))  
+    accuracy = tf.cast(true_thresh == pred_thresh, tf.float32)
+
+    return tf.math.reduce_sum(accuracy) / tf.math.reduce_sum(tf.ones_like(true_thresh))  
