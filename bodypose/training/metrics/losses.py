@@ -5,7 +5,7 @@ import tensorflow as tf
 ALPHA = 2
 BETA = 4
 GAMMA = 1e1
-LAMBDA = 1e2
+LAMBDA = 1 #1e2
 
 def FocalLoss(y_true, y_pred, num_joints):
     """ Focal Loss used to estimate the probability of the joint being in the cell """
@@ -146,7 +146,7 @@ def RegressionLoss2D(y_true, y_pred, threshold=0.5, j_list=[]):
     #delta_loss = tf.math.reduce_sum(delta_loss)
     
     #return LAMBDA * (mse_loss + delta_loss + mse_loss_raw) + binary_cross_entropy + mse_loss_raw
-    return LAMBDA * (mse_loss + binary_cross_entropy) + mse_loss_raw
+    return LAMBDA * (binary_cross_entropy) + mse_loss_raw
 
 
 @tf.function
