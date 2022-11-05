@@ -23,6 +23,12 @@ def FocalLoss(y_true, y_pred, num_joints):
     return loss
 
 
+def EuclideanLoss(y_true, y_pred):
+    dist = tf.math.sqrt(tf.math.pow(y_true - y_pred, 2))
+    loss = tf.math.reduce_sum(dist)
+    return loss    
+
+
 # *** DOES NOT WORRK RIGHT NOW ***
 #def DeltaJointsLoss(y_true, y_pred, j_list):
 #    """ 
@@ -152,7 +158,8 @@ def RegressionLoss2D(y_true, y_pred, threshold=0.5, j_list=[]):
 @tf.function
 def AuxiliaryLoss(y_true, y_pred):
     
-    num_joints = tf.cast(tf.math.sqrt(tf.cast(y_pred.shape[-2], tf.float32)), tf.int32)
-    focal_loss = FocalLoss(y_true, y_pred, num_joints)
+    #num_joints = tf.cast(tf.math.sqrt(tf.cast(y_pred.shape[-2], tf.float32)), tf.int32)
+    #focal_loss = FocalLoss(y_true, y_pred, num_joints)
+    loss = EuclideanLoss(y_true, y_pred)
     
-    return LAMBDA * focal_loss 
+    return LAMBDA * loss 
