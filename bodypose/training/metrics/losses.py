@@ -146,7 +146,7 @@ def RegressionLoss2D(y_true, y_pred, threshold=0.5, j_list=[]):
     #delta_loss = tf.math.reduce_sum(delta_loss)
     
     #return LAMBDA * (mse_loss + delta_loss + mse_loss_raw) + binary_cross_entropy + mse_loss_raw
-    return LAMBDA * (binary_cross_entropy) + mse_loss_raw
+    return LAMBDA * (mse_loss + binary_cross_entropy) + mse_loss_raw
 
 
 @tf.function
