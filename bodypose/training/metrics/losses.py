@@ -25,8 +25,10 @@ def FocalLoss(y_true, y_pred, num_joints):
 
 def EuclideanLoss(y_true, y_pred):
     dist = tf.math.sqrt(tf.math.pow(y_true - y_pred, 2))
-    loss = tf.math.reduce_mean(dist)
-    return loss    
+    loss = tf.math.reduce_sum(dist, axis=-2)
+    loss = tf.reduce_mean(loss, axis=-1)
+    loss = tf.reduce_mean(loss)
+    return loss 
 
 
 # *** DOES NOT WORRK RIGHT NOW ***
