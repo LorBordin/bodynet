@@ -47,7 +47,6 @@ def create_density_maps(peak_coords: tf.Tensor, grid_dim: int):
     mask = tf.reshape(mask, (1, 1, n_joints))
 
     pdfs *= mask
-    pdfs = tf.reshape(pdfs, (grid_dim*grid_dim, -1))
     
     return pdfs
 
