@@ -47,13 +47,12 @@ class MoveNet(tf.keras.Model):
                            num_joints=num_joints, 
                            out_channels=int(256*alpha),
                            use_depthwise=use_depthwise)
-        self.postproc = create_postproc_model(self.head.outputs, debug=debug)
 
     def call(self, inputs):
         x = self.backbone(inputs)
         x = self.fpn(x)
         x = self.head(x)
-        return self.postproc(x)
+        return x
 
 
 if __name__=="__main__":
