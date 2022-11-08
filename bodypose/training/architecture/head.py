@@ -54,7 +54,8 @@ def create_Head(inputs,
     k_heatmaps = L.Conv2D(num_joints, (1, 1), name=h_name)(k_heatmaps)
     k_heatmaps = L.Activation("sigmoid", name=h_name+"_act")(k_heatmaps)
 
-    outputs = [centermap, k_heatmaps]
+    outputs = L.Concatenate()([centermap, k_heatmaps])
+    outputs = L.Reshape((-1, num_joints+1))(outputs)
     head  = Model(inputs, outputs, name=name)
     
     return head

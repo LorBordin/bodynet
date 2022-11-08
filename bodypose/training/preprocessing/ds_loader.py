@@ -192,7 +192,7 @@ def create_labels(c_kpts, c_cntrs, grid_dim):
     
     y_pdfs = tf.concat([centres_heatmap, kpts_heatmaps], axis=-1)
     
-    return y_coords, y_pdfs
+    return y_pdfs
 
 
 def decode_samples(
