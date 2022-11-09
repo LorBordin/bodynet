@@ -178,7 +178,7 @@ def create_labels(c_kpts, c_cntrs, grid_dim):
     # visible coordinates
     vis_kpts = tf.where(tf.math.reduce_sum(c_kpts, axis=-1)==0., 0., 1.)
     vis_kpts = tf.expand_dims(vis_kpts, axis=-1)
-    y_coords = tf.concat([vis_kpts, c_kpts[:, :2], c_kpts[:, :2]], axis=-1)
+    y_coords = tf.concat([vis_kpts, c_kpts[:, :2]], axis=-1)
 
     ### AUXILIARY LABELS ###
     
@@ -192,7 +192,7 @@ def create_labels(c_kpts, c_cntrs, grid_dim):
     
     y_pdfs = tf.concat([centres_heatmap, kpts_heatmaps], axis=-1)
     
-    return y_pdfs
+    return y_coords, y_pdfs
 
 
 def decode_samples(

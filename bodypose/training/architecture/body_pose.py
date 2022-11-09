@@ -37,9 +37,13 @@ class MoveNet(tf.keras.Model):
                  alpha=1, 
                  backbone_arch="mobilenetV2", 
                  use_depthwise=False,
-                 debug=False):
+                 use_postproc=False):
 
         super().__init__()
+        self.use_postproc = use_postproc
+        self.grid_size = input_shape[0] // strides[-1]
+        post_input = L.Input((self.grid_size, self.grid_size, num_joints+1))
+
         self.inputs = L.Input(input_shape)
         self.backbone = create_backbone(input_shape, strides, alpha, arch=backbone_arch)
         self.fpn = create_FPN(inputs=self.backbone.outputs, in_channels=int(128*alpha))
@@ -47,11 +51,14 @@ class MoveNet(tf.keras.Model):
                            num_joints=num_joints, 
                            out_channels=int(256*alpha),
                            use_depthwise=use_depthwise)
+        self.postproc = create_postproc_model(inputs=post_input)
 
     def call(self, inputs):
         x = self.backbone(inputs)
         x = self.fpn(x)
         x = self.head(x)
+        if self.use_postproc:
+            x = self.postproc(x)
         return x
 
 
