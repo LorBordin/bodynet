@@ -50,9 +50,10 @@ def FocalLoss(y_true, y_pred, num_joints):
 
 
 @tf.function
-def ClassificationLoss(y_true, y_pred, threshold=0.5, j_list=[]):
+def ClassificationLoss(y_true, y_pred):
     
     # 1. select the probability
+    y_pred_proba = tf.gather(y_pred, list(range(1, 17)), axis=-2)
     y_true_proba = tf.gather(y_true, [0], axis=-1)
     y_pred_proba = tf.gather(y_pred, [0], axis=-1)
 
