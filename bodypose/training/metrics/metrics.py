@@ -40,8 +40,9 @@ def Accuracy(y_true, y_pred, threshold=.5):
 
     num_joints = tf.cast(y_pred.shape[-2], tf.int32)
 
+    pred_proba = tf.gather(y_pred, list(range(1, 17)), axis=-2)
     true_proba = tf.gather(y_true, [0], axis=-1)
-    pred_proba = tf.gather(y_pred, [0], axis=-1)
+    pred_proba = tf.gather(pred_proba, [0], axis=-1)
 
     true_thresh = tf.where(true_proba>threshold, 1., 0.)
     pred_thresh = tf.where(pred_proba>threshold, 1., 0.)

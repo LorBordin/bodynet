@@ -55,7 +55,7 @@ def ClassificationLoss(y_true, y_pred):
     # 1. select the probability
     y_pred_proba = tf.gather(y_pred, list(range(1, 17)), axis=-2)
     y_true_proba = tf.gather(y_true, [0], axis=-1)
-    y_pred_proba = tf.gather(y_pred, [0], axis=-1)
+    y_pred_proba = tf.gather(y_pred_proba, [0], axis=-1)
 
     # BinaryCrossEntropy Loss on probabilities
     binary_cross_entropy = keras.losses.binary_crossentropy(y_true_proba, y_pred_proba)
