@@ -52,8 +52,10 @@ def FocalLoss(y_true, y_pred, num_joints):
 @tf.function
 def ClassificationLoss(y_true, y_pred):
     
+    num_joints = tf.cast(y_true.shape[-2], tf.int32)
+
     # 1. select the probability
-    y_pred_proba = tf.gather(y_pred, list(range(1, 17)), axis=-2)
+    y_pred_proba = tf.gather(y_pred, list(range(1, num_joints+1)), axis=-2)
     y_true_proba = tf.gather(y_true, [0], axis=-1)
     y_pred_proba = tf.gather(y_pred_proba, [0], axis=-1)
 
@@ -61,3 +63,31 @@ def ClassificationLoss(y_true, y_pred):
     binary_cross_entropy = keras.losses.binary_crossentropy(y_true_proba, y_pred_proba)
     
     return binary_cross_entropy
+    
+
+@tf.function
+def RegrCoordsLoss(y_true, y_pred, threshold=0.5):
+    
+    num_joints = tf.cast(y_pred.shape[-2], tf.int32)
+
+    # 1. select the probability
+    y_true_proba = tf.gather(y_true, [0], axis=-1)
+    
+    # 2. Deal with coordinates
+    # exclude non visible joints coords
+    threshold_mask = y_true_proba > threshold
+    threshold_mask = tf.concat([threshold_mask] * 2, axis=-1)
+    
+    # select coords
+    y_pred_c = tf.gather(y_pred, list(range(1, num_joints+1)), axis=-2)
+    y_true_c = tf.gather(y_true, [1,2], axis=-1)
+    y_pred_c = tf.gather(y_pred_c, [1,2], axis=-1)
+
+    y_true_c = tf.boolean_mask(y_true_c, threshold_mask)
+    y_pred_c = tf.boolean_mask(y_pred_c, threshold_mask)
+
+    # MSE Loss on coords 2D
+    mse = keras.losses.mse(y_true_c, y_pred_c)
+
+    return mse
+

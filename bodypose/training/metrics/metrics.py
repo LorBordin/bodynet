@@ -19,8 +19,11 @@ def AvgMDE(true_coords, pred_coords):
 @tf.function
 def avgMDE_2D(y_true, y_pred):
 
-    coords_2d_true = y_true[:, :, 1:3]
-    coords_2d_pred = y_pred[:, :, 1:3]
+    num_joints = tf.cast(y_true.shape[-2], tf.int32)
+
+    coords_2d_pred = tf.gather(y_pred, list(range(1, num_joints+1)), axis=-2)
+    coords_2d_true = tf.gather(y_true, [1,2,3], axis=-1)
+    coords_2d_pred = tf.gather(coords_2d_pred, [1,2,3], axis=-1)
     
     return AvgMDE(coords_2d_true, coords_2d_pred)
 
@@ -38,9 +41,9 @@ def avgMDE_2D_RAW(y_true, y_pred):
 def Accuracy(y_true, y_pred, threshold=.5):
     """ Evaluate the percentage of joints which are correctly predicted as (not) visible. """
 
-    num_joints = tf.cast(y_pred.shape[-2], tf.int32)
+    num_joints = tf.cast(y_true.shape[-2], tf.int32)
 
-    pred_proba = tf.gather(y_pred, list(range(1, 17)), axis=-2)
+    pred_proba = tf.gather(y_pred, list(range(1, num_joints+1)), axis=-2)
     true_proba = tf.gather(y_true, [0], axis=-1)
     pred_proba = tf.gather(pred_proba, [0], axis=-1)
 
