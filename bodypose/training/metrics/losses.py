@@ -6,6 +6,7 @@ ALPHA = 2
 BETA = 4
 GAMMA = 1e1
 LAMBDA = 1 #1e2
+NUM_JOINTS = 16
 
 def FocalLoss(y_true, y_pred, num_joints):
     """ Focal Loss used to estimate the probability of the joint being in the cell """
@@ -50,12 +51,10 @@ def FocalLoss(y_true, y_pred, num_joints):
 
 
 @tf.function
-def ClassificationLoss(y_true, y_pred):
-    
-    num_joints = tf.cast(y_true.shape[-2], tf.int32)
+def ClassificationLoss(y_true, y_pred, ):
 
     # 1. select the probability
-    y_pred_proba = tf.gather(y_pred, list(range(1, num_joints+1)), axis=-2)
+    y_pred_proba = tf.gather(y_pred, list(range(1, NUM_JOINTS+1)), axis=-2)
     y_true_proba = tf.gather(y_true, [0], axis=-1)
     y_pred_proba = tf.gather(y_pred_proba, [0], axis=-1)
 
@@ -67,8 +66,6 @@ def ClassificationLoss(y_true, y_pred):
 
 @tf.function
 def RegrCoordsLoss(y_true, y_pred, threshold=0.5):
-    
-    num_joints = tf.cast(y_pred.shape[-2], tf.int32)
 
     # 1. select the probability
     y_true_proba = tf.gather(y_true, [0], axis=-1)
@@ -79,7 +76,7 @@ def RegrCoordsLoss(y_true, y_pred, threshold=0.5):
     threshold_mask = tf.concat([threshold_mask] * 2, axis=-1)
     
     # select coords
-    y_pred_c = tf.gather(y_pred, list(range(1, num_joints+1)), axis=-2)
+    y_pred_c = tf.gather(y_pred, list(range(1, NUM_JOINTS+1)), axis=-2)
     y_true_c = tf.gather(y_true, [1,2], axis=-1)
     y_pred_c = tf.gather(y_pred_c, [1,2], axis=-1)
 
