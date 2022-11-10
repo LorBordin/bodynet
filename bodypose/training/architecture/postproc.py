@@ -68,6 +68,6 @@ def create_postproc_model(inputs, name="post_processing"):
     kpts_coords = L.Concatenate()([kpts_probas, kpts_coords])
     heatmaps = L.Concatenate()([centermap, k_heatmaps])
 
-    post_proc = Model(inputs, [kpts_coords, heatmaps, c_offsets], name=name)
+    post_proc = Model(inputs, [kpts_coords, heatmaps], name=name)
     
     return post_proc
