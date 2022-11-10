@@ -57,16 +57,17 @@ def create_postproc_model(inputs, name="post_processing"):
     c_offsets = L.GlobalMaxPooling2D()(c_offsets)  
     c_offsets = L.Lambda(lambda x: x / tf.cast(grid_dim, tf.float32))(c_offsets)
 
-    joint_coords = L.Concatenate(name="coarse_coords_concat")([x_j, y_j])
-    joint_coords = L.Add(name="final_coords")([joint_coords, c_offsets])
+    kpts_coords = L.Concatenate(name="coarse_coords_concat")([x_j, y_j])
+    kpts_coords = L.Add(name="final_coords")([kpts_coords, c_offsets])
     
     # Reshape before concatenate the outputs
     kpts_probas = L.Reshape((-1, 1))(kpts_probas)
-    joint_coords = L.Reshape((-1, 2))(joint_coords)
+    kpts_coords = L.Reshape((2, -1))(kpts_coords)
+    kpts_coords = L.Permute((2,1))(kpts_coords)
 
-    joint_coords = L.Concatenate()([kpts_probas, joint_coords])
+    kpts_coords = L.Concatenate()([kpts_probas, kpts_coords])
     heatmaps = L.Concatenate()([centermap, k_heatmaps])
 
-    post_proc = Model(inputs, [joint_coords, heatmaps], name=name)
+    post_proc = Model(inputs, [kpts_coords, heatmaps, c_offsets], name=name)
     
     return post_proc
