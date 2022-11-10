@@ -19,11 +19,21 @@ def AvgMDE(true_coords, pred_coords):
 
 
 @tf.function
-def avgMDE_2D(y_true, y_pred):
+def avgMDE_2D(y_true, y_pred, threshold=.5):
 
-    coords_2d_pred = tf.gather(y_pred, list(range(1, NUM_JOINTS+1)), axis=-2)
-    coords_2d_true = tf.gather(y_true, [1,2,3], axis=-1)
-    coords_2d_pred = tf.gather(coords_2d_pred, [1,2,3], axis=-1)
+    # 1. select the probability
+    y_true_proba = tf.gather(y_true, [0], axis=-1)
+    
+    # 2. exclude non visible joints coords
+    threshold_mask = y_true_proba > threshold
+    threshold_mask = tf.concat([threshold_mask] * 2, axis=-1)
+
+    #coords_2d_pred = tf.gather(y_pred, list(range(1, NUM_JOINTS+1)), axis=-2)
+    coords_2d_true = tf.gather(y_true, [1,2], axis=-1)
+    coords_2d_pred = tf.gather(y_pred, [1,2], axis=-1)
+
+    coords_2d_true = tf.boolean_mask(coords_2d_true, threshold_mask)
+    coords_2d_pred = tf.boolean_mask(coords_2d_pred, threshold_mask)
     
     return AvgMDE(coords_2d_true, coords_2d_pred)
 
@@ -41,9 +51,9 @@ def avgMDE_2D_RAW(y_true, y_pred):
 def Accuracy(y_true, y_pred, threshold=.5):
     """ Evaluate the percentage of joints which are correctly predicted as (not) visible. """
 
-    pred_proba = tf.gather(y_pred, list(range(1, NUM_JOINTS+1)), axis=-2)
+    #pred_proba = tf.gather(y_pred, list(range(1, NUM_JOINTS+1)), axis=-2)
     true_proba = tf.gather(y_true, [0], axis=-1)
-    pred_proba = tf.gather(pred_proba, [0], axis=-1)
+    pred_proba = tf.gather(y_pred, [0], axis=-1)
 
     true_thresh = tf.where(true_proba>threshold, 1., 0.)
     pred_thresh = tf.where(pred_proba>threshold, 1., 0.)

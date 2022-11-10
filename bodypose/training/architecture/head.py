@@ -54,7 +54,14 @@ def create_Head(inputs,
     k_heatmaps = L.Conv2D(num_joints, (1, 1), name=h_name)(k_heatmaps)
     k_heatmaps = L.Activation("sigmoid", name=h_name+"_act")(k_heatmaps)
 
-    outputs = L.Concatenate()([centermap, k_heatmaps])
+    # Coordinates offsets
+    c_name = name+"_c_offsets"
+    c_offsets = Conv3x3Module(out_channels, activation, c_name, use_depthwise)(inputs)
+    c_offsets = L.Conv2D(num_joints * n_dim, (1, 1), name=c_name)(c_offsets)
+    c_offsets = L.Activation("sigmoid", name=c_name+"_act")(c_offsets)
+    
+    outputs = [centermap, k_heatmaps, c_offsets]
+    
     head  = Model(inputs, outputs, name=name)
     
     return head

@@ -42,7 +42,6 @@ class MoveNet(tf.keras.Model):
         super().__init__()
         self.use_postproc = use_postproc
         self.grid_size = input_shape[0] // strides[-1]
-        post_input = L.Input((self.grid_size, self.grid_size, num_joints+1))
 
         self.inputs = L.Input(input_shape)
         self.backbone = create_backbone(input_shape, strides, alpha, arch=backbone_arch)
@@ -51,7 +50,7 @@ class MoveNet(tf.keras.Model):
                            num_joints=num_joints, 
                            out_channels=int(256*alpha),
                            use_depthwise=use_depthwise)
-        self.postproc = create_postproc_model(inputs=post_input)
+        self.postproc = create_postproc_model(inputs=self.head.outputs)
 
     def call(self, inputs):
         x = self.backbone(inputs)

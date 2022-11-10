@@ -54,14 +54,14 @@ def FocalLoss(y_true, y_pred, num_joints):
 def ClassificationLoss(y_true, y_pred, ):
 
     # 1. select the probability
-    y_pred_proba = tf.gather(y_pred, list(range(1, NUM_JOINTS+1)), axis=-2)
     y_true_proba = tf.gather(y_true, [0], axis=-1)
-    y_pred_proba = tf.gather(y_pred_proba, [0], axis=-1)
+    y_pred_proba = tf.gather(y_pred, [0], axis=-1)
 
     # BinaryCrossEntropy Loss on probabilities
     binary_cross_entropy = keras.losses.binary_crossentropy(y_true_proba, y_pred_proba)
+    loss = tf.math.reduce_mean(binary_cross_entropy)
     
-    return binary_cross_entropy
+    return loss
     
 
 @tf.function
@@ -76,9 +76,9 @@ def RegrCoordsLoss(y_true, y_pred, threshold=0.5):
     threshold_mask = tf.concat([threshold_mask] * 2, axis=-1)
     
     # select coords
-    y_pred_c = tf.gather(y_pred, list(range(1, NUM_JOINTS+1)), axis=-2)
+    #y_pred_c = tf.gather(y_pred, list(range(1, NUM_JOINTS+1)), axis=-2)
     y_true_c = tf.gather(y_true, [1,2], axis=-1)
-    y_pred_c = tf.gather(y_pred_c, [1,2], axis=-1)
+    y_pred_c = tf.gather(y_pred, [1,2], axis=-1)
 
     y_true_c = tf.boolean_mask(y_true_c, threshold_mask)
     y_pred_c = tf.boolean_mask(y_pred_c, threshold_mask)
