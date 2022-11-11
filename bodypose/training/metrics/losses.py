@@ -100,7 +100,7 @@ def RegrCoordsLossRaw(y_true, y_pred, threshold=0.5):
     threshold_mask = tf.concat([threshold_mask] * 2, axis=-1)
     
     # select coords
-    y_true_c = tf.gather(y_true, [3, 4], axis=-1)
+    y_true_c = tf.gather(y_true, [1, 2], axis=-1)
     y_pred_c = tf.gather(y_pred, [3, 4], axis=-1)
 
     y_true_c = tf.boolean_mask(y_true_c, threshold_mask)
