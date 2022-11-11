@@ -48,6 +48,8 @@ def create_postproc_model(inputs, name="post_processing"):
     k_offsets = L.Lambda(lambda x: x * grid_dim * grid_dim)(k_offsets)
     
     raw_kpts_coords = L.Add()([k_offsets, center])
+    raw_kpts_coords = L.Reshape((2, -1))(raw_kpts_coords)
+    raw_kpts_coords = L.Permute((2,1))(raw_kpts_coords)
 
     # 4. Get the offsets from the keypoints heatmaps
     offset_mask = L.Concatenate()([jointmask]*2)
