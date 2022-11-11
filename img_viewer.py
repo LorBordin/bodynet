@@ -38,7 +38,7 @@ def main(imgPaths, labelPaths, idx, kpts_dict):
         img = cv2.imread(imgPath)
         H, W = img.shape[:2]
 
-        img = draw_keypoints(img, c_kpts, .5, kpts_dict)
+        img = draw_keypoints(img, c_kpts, -1, kpts_dict)
         img = draw_point(img, c_cntrs)
 
         # reshape according to its size

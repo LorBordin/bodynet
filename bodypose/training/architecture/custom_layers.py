@@ -77,6 +77,36 @@ class Conv3x3Module(L.Layer):
         return self.act(x)
 
 
+class ExtractCoordinates(L.Layer):
+    def __init__(self, n_rep):
+        super().__init__()
+
+        self.n_rep = n_rep
+
+        self.x_mesh = L.Lambda(lambda x: grid_coords(x, axis=1))
+        self.y_mesh = L.Lambda(lambda x: grid_coords(x, axis=0))
+        self.mult = L.Multiply()
+        self.glob_max = L.GlobalMaxPooling2D()
+        self.concat =  L.Concatenate()
+        
+    def call(self, inputs):
+
+        x = self.x_mesh(inputs)
+        x = self.mult([x, inputs])
+        x = self.glob_max(x)
+        x = self.concat([x] * self.n_rep)
+
+        y = self.y_mesh(inputs)
+        y = self.mult([y, inputs])
+        y = self.glob_max(y)
+        y = self.concat([y] * self.n_rep)
+        
+        coords = self.concat([x, y])
+
+        return coords 
+
+
+
 def grid_coords(x, axis):
     """
         Given a tensor of shape (batch_size, grid_dim, grid_dim, channels), returns a tensor with
