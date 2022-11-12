@@ -1,4 +1,5 @@
 from tensorflow.keras.regularizers import l2
+from tensorflow.keras import backend as K
 from tensorflow.keras import layers as L
 import tensorflow as tf 
 
@@ -106,6 +107,39 @@ class ExtractCoordinates(L.Layer):
         return coords 
 
 
+class SpatialAttentionModule(L.Layer):
+    def __init__(self, n_filters):
+        self.n_filters = n_filters
+        self.kernel_sizev= 7
+
+        self.avg_pool = L.Lambda(lambda x: K.mean(x, axis=3, keepdims=True))
+        self.max_pool = L.Lambda(lambda x: K.max(x, axis=3, keepdims=True))
+        self.concat = L.Concatenate(axis=3)
+        self.conv = L.Conv2D(
+            filters = n_filters,
+			kernel_size = self.kernel_size,
+			strides=1,
+			padding='same',
+			activation='sigmoid',
+			kernel_initializer='he_normal',
+			use_bias=False
+            )	
+        self.multiply = L.Multiply()
+        self.act = L.Activation("sigmoid")
+
+    def call(self, inputs):
+        avg_pool = self.avg_pool(inputs)
+        max_pool = self.max_pool(inputs)
+        x = self.concat([avg_pool, max_pool])
+        x = self.conv(x)
+        x = self.act(x)
+        x = self.multiply([inputs, x])
+        return x
+
+
+
+		
+	return multiply([input_feature, cbam_feature])
 
 def grid_coords(x, axis):
     """
