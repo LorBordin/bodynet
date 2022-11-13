@@ -135,11 +135,7 @@ class SpatialAttentionModule(L.Layer):
         x = self.act(x)
         x = self.multiply([inputs, x])
         return x
-
-
-
-		
-	return multiply([input_feature, cbam_feature])
+        
 
 def grid_coords(x, axis):
     """
