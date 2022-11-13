@@ -3,7 +3,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras import layers as L
 import tensorflow as tf 
 
-EPSILON = 1e-2
+EPSILON = 1e-1
 
 class DepthWiseConv2D(L.Layer):
     """ 

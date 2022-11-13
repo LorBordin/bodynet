@@ -52,9 +52,7 @@ def create_postproc_model(inputs, name="post_processing"):
     raw_kpts_coords = L.Permute((2,1))(raw_kpts_coords)
 
     # 4. Get the coordinates of the keypoints 
-    joint_offsets = L.Reshape((2, num_joints))(raw_kpts_coords)
-    joint_offsets = L.Permute((2,1))(joint_offsets)
-    inv_dist = L.Lambda(lambda x: get_inverse_dist_grid(x))([k_heatmaps, joint_offsets])
+    inv_dist = L.Lambda(lambda x: get_inverse_dist_grid(x))([k_heatmaps, raw_kpts_coords])
     w_k_heatmaps = L.Multiply()([k_heatmaps, inv_dist])
     jointmask = L.Lambda(lambda x: get_max_mask(x))(w_k_heatmaps)
 

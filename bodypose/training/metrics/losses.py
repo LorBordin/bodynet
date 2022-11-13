@@ -60,7 +60,7 @@ def ClassificationLoss(y_true, y_pred, ):
     # BinaryCrossEntropy Loss on probabilities
     binary_cross_entropy = keras.losses.binary_crossentropy(y_true_proba, y_pred_proba)
     
-    return binary_cross_entropy
+    return tf.reduce_sum(binary_cross_entropy, axis=-1)
     
 
 @tf.function
