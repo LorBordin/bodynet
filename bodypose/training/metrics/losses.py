@@ -59,9 +59,8 @@ def ClassificationLoss(y_true, y_pred, ):
 
     # BinaryCrossEntropy Loss on probabilities
     binary_cross_entropy = keras.losses.binary_crossentropy(y_true_proba, y_pred_proba)
-    loss = tf.math.reduce_mean(binary_cross_entropy)
     
-    return loss
+    return binary_cross_entropy
     
 
 @tf.function
@@ -82,7 +81,7 @@ def RegrCoordsLoss(y_true, y_pred, threshold=0.5):
     y_pred_c *= threshold_mask
 
     # MSE Loss on coords 2D
-    loss = tf.reduce_sum(tf.square(y_true_c - y_pred_c), axis=[1,2])
+    loss = tf.reduce_sum(tf.abs(y_true_c - y_pred_c), axis=[1,2])
 
     return loss
 
@@ -105,7 +104,7 @@ def RegrCoordsLossRaw(y_true, y_pred, threshold=0.5):
     y_pred_c *= threshold_mask
 
     # MSE Loss on coords 2D
-    loss = tf.reduce_sum(tf.square(y_true_c - y_pred_c), axis=[1, 2])
+    loss = tf.reduce_sum(tf.abs(y_true_c - y_pred_c), axis=[1, 2])
 
     return loss
 

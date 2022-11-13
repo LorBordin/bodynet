@@ -49,7 +49,7 @@ def avgMDE_2D_Raw(y_true, y_pred, threshold=.5):
     threshold_mask = tf.concat([threshold_mask] * 2, axis=-1)
 
     #coords_2d_pred = tf.gather(y_pred, list(range(1, NUM_JOINTS+1)), axis=-2)
-    coords_2d_true = tf.gather(y_true, [3,4], axis=-1)
+    coords_2d_true = tf.gather(y_true, [1,2], axis=-1)
     coords_2d_pred = tf.gather(y_pred, [3,4], axis=-1)
 
     coords_2d_true = tf.boolean_mask(coords_2d_true, threshold_mask)
