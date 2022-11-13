@@ -109,8 +109,10 @@ class ExtractCoordinates(L.Layer):
 
 class SpatialAttentionModule(L.Layer):
     def __init__(self, n_filters):
+        super().__init__()
+
         self.n_filters = n_filters
-        self.kernel_sizev= 7
+        self.kernel_size = 7
 
         self.avg_pool = L.Lambda(lambda x: K.mean(x, axis=3, keepdims=True))
         self.max_pool = L.Lambda(lambda x: K.max(x, axis=3, keepdims=True))
@@ -124,7 +126,6 @@ class SpatialAttentionModule(L.Layer):
 			kernel_initializer='he_normal',
 			use_bias=False
             )	
-        self.multiply = L.Multiply()
         self.act = L.Activation("sigmoid")
 
     def call(self, inputs):
@@ -133,7 +134,6 @@ class SpatialAttentionModule(L.Layer):
         x = self.concat([avg_pool, max_pool])
         x = self.conv(x)
         x = self.act(x)
-        x = self.multiply([inputs, x])
         return x
         
 
