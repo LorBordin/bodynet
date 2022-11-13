@@ -67,7 +67,7 @@ def ClassificationLoss(y_true, y_pred, ):
 @tf.function
 def RegrCoordsLoss(y_true, y_pred, threshold=0.5):
 
-    # 1. select the probability
+  # 1. select the probability
     y_true_proba = tf.gather(y_true, [0], axis=-1)
     
     # 2. Deal with coordinates
@@ -82,7 +82,7 @@ def RegrCoordsLoss(y_true, y_pred, threshold=0.5):
     y_pred_c *= threshold_mask
 
     # MSE Loss on coords 2D
-    loss = tf.reduce_sum(tf.square(y_true_c - y_pred_c))
+    loss = tf.reduce_sum(tf.square(y_true_c - y_pred_c), axis=[1,2])
 
     return loss
 
@@ -105,7 +105,7 @@ def RegrCoordsLossRaw(y_true, y_pred, threshold=0.5):
     y_pred_c *= threshold_mask
 
     # MSE Loss on coords 2D
-    loss = tf.reduce_sum(tf.square(y_true_c - y_pred_c))
+    loss = tf.reduce_sum(tf.square(y_true_c - y_pred_c), axis=[1, 2])
 
     return loss
 
