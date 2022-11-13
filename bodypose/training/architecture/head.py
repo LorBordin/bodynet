@@ -45,9 +45,7 @@ def create_Head(inputs,
     # CenterMap Head
     c_name = name+"_centermap"
     centermap = Conv3x3Module(out_channels, activation, c_name, use_depthwise)(inputs)
-    attention  = SpatialAttentionModule(1)(centermap)
     centermap = L.Conv2D(1, (1, 1), name=c_name)(centermap)
-    centermap = L.Multiply()([centermap, attention])
     centermap = L.Activation("sigmoid", name=c_name+"_act")(centermap)
 
     # Keypoints offset from center
@@ -59,9 +57,7 @@ def create_Head(inputs,
     # Keypoints heatmaps 
     h_name = name+"_k_heatmaps"
     k_heatmaps = Conv3x3Module(out_channels, activation, h_name, use_depthwise)(inputs)
-    attention = SpatialAttentionModule(num_joints)(k_heatmaps)
     k_heatmaps = L.Conv2D(num_joints, (1, 1), name=h_name)(k_heatmaps)
-    k_heatmaps = L.Multiply()([k_heatmaps, attention])
     k_heatmaps = L.Activation("sigmoid", name=h_name+"_act")(k_heatmaps)
 
     # Coordinates offsets
